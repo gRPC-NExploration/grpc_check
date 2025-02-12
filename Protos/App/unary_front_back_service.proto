@@ -6,13 +6,17 @@ option csharp_namespace = "App.Protos";
 
 import "google/protobuf/empty.proto";
 
+// Унарные операции
+// Front -> Back, Front <- Back
 service UnaryFrontBackService {
-    // Загрузка файла на сервер
+    // Загрузка файла на сервер.
+    // Когда файл уже существует, выбрасывает ошибку валидации.
+    //
     // NOTE: Не следует загружать файлы более 2.5мб, это медленно.
     // Вроде. Где-то видел про это информацию.
     rpc Upload(File) returns (google.protobuf.Empty);
 
-    // Запрос требующий авторизации
+    // Запрос требующий авторизации (Можно получить из authentication_service)
     rpc ClearStoredFiles(google.protobuf.Empty) returns (ClearStoredFilesResponse);
 }
 

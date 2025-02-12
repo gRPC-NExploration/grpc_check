@@ -4,7 +4,11 @@ package app;
 
 option csharp_namespace = "App.Protos";
 
+// Унарный сервис аутентификации
+// Front -> Back, Front <- Back
 service AuthenticationService {
+    // Получить Bearer Token для дальнейшей аутентификации и авторизации.
+    // В случае пустого имени выдаст необработанное C# исключение.
     rpc GetBearerToken(GetBearerTokenRequest) returns (GetBearerTokenResponse);
 }
 
