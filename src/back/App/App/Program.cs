@@ -8,6 +8,8 @@ using App.Services.Implementations;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 
+// TODO: Добавить Interceptor для логгирования запросов.
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
