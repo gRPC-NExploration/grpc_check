@@ -17,7 +17,7 @@ public class BearerProvider : IBearerProvider
 
         var claims = new[] { new Claim(ClaimTypes.Name, name) };
         var credentials = new SigningCredentials(JwtShared.SecurityKey, SecurityAlgorithms.HmacSha256);
-        var token = new JwtSecurityToken("ExampleServer", "ExampleClients", claims, expires: DateTime.Now.AddSeconds(360), signingCredentials: credentials);
+        var token = new JwtSecurityToken("GrpcCheckServer", "GrpcCheckClient", claims, expires: DateTime.Now.AddSeconds(360), signingCredentials: credentials);
         return JwtShared.JwtTokenHandler.WriteToken(token);
     }
 }
