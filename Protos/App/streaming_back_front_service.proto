@@ -1,0 +1,37 @@
+syntax = "proto3";
+
+package app;
+
+option csharp_namespace = "App.Protos";
+
+import "google/protobuf/duration.proto";
+
+service StreamingBackFrontService {
+    // Получить имена файлов.
+    // Ответные сообщения будут поступать последовательно, по одному имени файла, с заданным интервалом
+    rpc GetFileNames(GetFileNamesRequest) returns (stream GetFileNamesResponse);
+    rpc Download(DownloadRequest) returns (stream DownloadResponse);
+}
+
+message GetFileNamesRequest {
+    // Интервал для эмуляции долгово поиска имен
+    google.protobuf.Duration interval = 1;
+}
+
+message GetFileNamesResponse {
+    string file_name = 1;
+}
+
+message DownloadRequest {
+    string file_name = 1;
+}
+
+message DownloadResponse {
+    FileMetadata metadata = 1;
+    int32 chunk = 2;
+    bytes data = 3;
+}
+
+message FileMetadata {
+    string file_name = 1;
+}

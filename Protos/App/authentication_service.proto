@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package app;
+
+option csharp_namespace = "App.Protos";
+
+service AuthenticationService {
+    rpc GetBearerToken(GetBearerTokenRequest) returns (GetBearerTokenResponse);
+}
+
+message GetBearerTokenRequest {
+    string user_name = 1;
+}
+
+message GetBearerTokenResponse {
+    string bearer_token = 1;
+}
