@@ -6,5 +6,6 @@ syntax = "proto3";
 package sdk;
 
 import "App/authentication_service.proto";
+import "App/chat_service.proto";
 import "App/streaming_back_front_service.proto";
 import "App/unary_front_back_service.proto";

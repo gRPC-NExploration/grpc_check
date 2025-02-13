@@ -14,10 +14,14 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddGrpc();
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddGrpcReflection();
 
 // Other services
 builder.Services.AddSingleton<IFilePathStore, FilePathStore>();
+builder.Services.AddSingleton<IChatProvider, ChatProvider>();
 builder.Services.AddSingleton<IBearerProvider, BearerProvider>();
+builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 
 // Authorization
 builder.Services
@@ -45,8 +49,16 @@ builder.Services
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-app.MapGrpcService<UnaryFrontBackGrpcService>();
-app.MapGrpcService<StreamingBackFrontGrpcService>();
 app.MapGrpcService<AuthenticationGrpcService>();
+app.MapGrpcService<ChatGrpcService>();
+app.MapGrpcService<StreamingBackFrontGrpcService>();
+app.MapGrpcService<UnaryFrontBackGrpcService>();
+
+if(app.Environment.IsDevelopment())
+{
+    app
+        .MapGrpcReflectionService()
+        .AllowAnonymous();
+}
 
 await app.RunAsync();
