@@ -17,6 +17,7 @@ builder.Services.AddGrpc();
 
 // Other services
 builder.Services.AddSingleton<IFilePathStore, FilePathStore>();
+builder.Services.AddSingleton<IBearerProvider, BearerProvider>();
 
 // Authorization
 builder.Services
