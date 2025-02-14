@@ -42,7 +42,7 @@ public class UnaryFrontBackGrpcService(IFilePathStore filePathStore)
         return Task.FromResult(result);
     }
 
-    public RpcException GetFileAlreadyExistsException(string fileName, string paramName = "")
+    public RpcException GetFileAlreadyExistsException(string fileName, string paramName)
     {
         return new Google.Rpc.Status()
         {

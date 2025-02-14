@@ -63,7 +63,7 @@ public class StreamingBackFrontGrpcService(IFilePathStore filePathStore)
         }
     }
 
-    public RpcException GetFileNotFoundException(string fileName, string paramName = "")
+    public RpcException GetFileNotFoundException(string fileName, string paramName)
     {
         return new Google.Rpc.Status()
         {

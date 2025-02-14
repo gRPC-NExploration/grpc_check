@@ -1,6 +1,7 @@
 using System.Security.Claims;
 
 using App.Defaults;
+using App.GrpcInterceptors;
 using App.GrpcServices;
 using App.Services.Contracts;
 using App.Services.Implementations;
@@ -8,12 +9,14 @@ using App.Services.Implementations;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 
-// TODO: Добавить Interceptor для логгирования запросов.
-
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddGrpc();
+builder.Services.AddGrpc(opt => 
+{
+    opt.Interceptors.Add<ExceptionInterceptor>();
+    opt.Interceptors.Add<ServerLoggingInterceptor>();
+});
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddGrpcReflection();
 
