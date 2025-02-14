@@ -24,10 +24,7 @@ public class ChatGrpcService(IChatProvider chatProvider, ICurrentUserService cur
         {
             ChatName = chat.ChatName,
             CreatorName = chat.Creator,
-            CreatedTime = new()
-            {
-                Seconds = chat.CreatedDateTime.Second
-            }
+            CreatedTime = Timestamp.FromDateTime(chat.CreatedDateTime)
         };
 
         foreach (var message in chat.Messages.Values)
@@ -66,10 +63,7 @@ public class ChatGrpcService(IChatProvider chatProvider, ICurrentUserService cur
                 MessageText = message.MessageContent.MessageText
             },
             SenderName = message.SenderName,
-            MessageSendTime = new()
-            {
-                Seconds = message.SendTime.Second
-            }
+            MessageSendTime = Timestamp.FromDateTime(message.SendTime)
         };
     }
 }
