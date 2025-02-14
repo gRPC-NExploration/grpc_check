@@ -1,13 +1,13 @@
 ﻿using System.Collections.Concurrent;
-using System.Runtime.CompilerServices;
-using System.Threading.Channels;
+using System.Threading.Tasks.Dataflow;
 
 namespace Domain.Entities;
 
 public class Chat
 {
     private readonly ConcurrentDictionary<Guid, Message> _messages = [];
-    private readonly ConcurrentDictionary<Channel<Message>, byte> _subscribers = [];
+    private readonly BroadcastBlock<Message> _messageBlock = new(msg => msg);
+    private readonly List<IDisposable> _subscriptions = [];
 
     public string ChatName { get; init; }
 
@@ -33,42 +33,15 @@ public class Chat
 
         _messages[message.Id] = message;
 
-        var writeTasks = _subscribers.Keys.Select(async subscriber =>
-        {
-            try
-            {
-                await subscriber.Writer.WriteAsync(message, cancellationToken);
-            }
-            catch
-            {
-                _subscribers.TryRemove(subscriber, out _);
-            }
-        });
-
-        await Task.WhenAll(writeTasks);
+        await _messageBlock.SendAsync(message, cancellationToken);
 
         return message;
     }
 
-    public async IAsyncEnumerable<Message> ReadNewMessages([EnumeratorCancellation] CancellationToken cancellationToken)
+    public IAsyncEnumerable<Message> ReadNewMessages(CancellationToken cancellationToken)
     {
-        var channel = Channel.CreateUnbounded<Message>();
-        _subscribers.TryAdd(channel, 0);
-
-        try
-        {
-            while (await channel.Reader.WaitToReadAsync(cancellationToken))
-            {
-                while (channel.Reader.TryRead(out var message))
-                {
-                    yield return message;
-                }
-            }
-        }
-        finally
-        {
-            _subscribers.TryRemove(channel, out _);
-        }
+        var outputBlock = CreateSubscriber(cancellationToken);
+        return outputBlock.ReceiveAllAsync(cancellationToken);
     }
 
     public static Chat Create(string chatName, string creator)
@@ -80,5 +53,25 @@ public class Chat
             throw new ArgumentException("Creator name was empty.", nameof(creator));
 
         return new Chat(chatName, creator, DateTime.UtcNow);
+    }
+
+    private BufferBlock<Message> CreateSubscriber(CancellationToken cancellationToken)
+    {
+        var outputBlock = new BufferBlock<Message>(new()
+        {
+            CancellationToken = cancellationToken
+        });
+
+        var link = _messageBlock.LinkTo(outputBlock, new() { PropagateCompletion = true });
+
+        _subscriptions.Add(link);
+
+        cancellationToken.Register(() =>
+        {
+            link.Dispose();
+            _subscriptions.Remove(link);
+        });
+
+        return outputBlock;
     }
 }
