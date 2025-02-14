@@ -22,7 +22,7 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddGrpcReflection();
 
 // Other services
-builder.Services.AddSingleton<IFilePathStore, FilePathStore>();
+builder.Services.AddSingleton<IFileStore, FileStore>();
 builder.Services.AddSingleton<IChatProvider, ChatProvider>();
 builder.Services.AddSingleton<IBearerProvider, BearerProvider>();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();

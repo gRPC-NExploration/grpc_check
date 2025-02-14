@@ -9,16 +9,14 @@ using Grpc.Core;
 
 namespace App.GrpcServices;
 
-public class StreamingBackFrontGrpcService(IFilePathStore filePathStore)
+public class StreamingBackFrontGrpcService(IFileStore filePathStore)
     : Protos.StreamingBackFrontService.StreamingBackFrontServiceBase
 {
-    private const int ChunkSize = 1024 * 32;
-
-    private readonly IFilePathStore _filePathStore = filePathStore;
+    private readonly IFileStore _filePathStore = filePathStore;
 
     public override async Task GetFileNames(GetFileNamesRequest request, IServerStreamWriter<GetFileNamesResponse> responseStream, ServerCallContext context)
     {
-        foreach (var fileName in _filePathStore.PathByFileName.Keys)
+        foreach (var fileName in _filePathStore.FilesByName.Keys)
         {
             await Task.Delay(request.Interval.ToTimeSpan());
             
@@ -33,33 +31,24 @@ public class StreamingBackFrontGrpcService(IFilePathStore filePathStore)
 
     public override async Task Download(DownloadRequest request, IServerStreamWriter<DownloadResponse> responseStream, ServerCallContext context)
     {
-        var fileName = request.FileName;
-
-        if (!_filePathStore.PathByFileName.TryGetValue(fileName, out var path))
+        if (!_filePathStore.FilesByName.TryGetValue(request.FileName, out var wrapper))
             throw GetFileNotFoundException(request.FileName, nameof(request.FileName));
 
-        await responseStream.WriteAsync(new DownloadResponse
+        var response = new DownloadResponse()
         {
-            Metadata = new FileMetadata { FileName = fileName }
-        });
+            Metadata = new FileMetadata { FileName = request.FileName }
+        };
 
-        var buffer = new byte[ChunkSize];
-        await using var fileStream = System.IO.File.OpenRead(path);
+        await responseStream.WriteAsync(response, context.CancellationToken);
+
         var chunk = 1;
 
-        while (true)
+        await foreach (var chunkData in wrapper.File.ReadChunked(context.CancellationToken))
         {
-            var numBytesRead = await fileStream.ReadAsync(buffer);
-            if (numBytesRead == 0)
-            {
-                break;
-            }
+            response.Chunk = chunk++;
+            response.Data = UnsafeByteOperations.UnsafeWrap(chunkData);
 
-            await responseStream.WriteAsync(new DownloadResponse
-            {
-                Chunk = chunk++,
-                Data = UnsafeByteOperations.UnsafeWrap(buffer.AsMemory(0, numBytesRead))
-            });
+            await responseStream.WriteAsync(response, context.CancellationToken);
         }
     }
 

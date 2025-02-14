@@ -1,4 +1,5 @@
-﻿using App.Protos;
+﻿using App.Models;
+using App.Protos;
 using App.Services.Contracts;
 
 using Google.Protobuf.WellKnownTypes;
@@ -10,21 +11,30 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace App.GrpcServices;
 
-public class UnaryFrontBackGrpcService(IFilePathStore filePathStore)
+public class UnaryFrontBackGrpcService(IFileStore filePathStore)
     : Protos.UnaryFrontBackService.UnaryFrontBackServiceBase
 {
-    private readonly IFilePathStore _filePathStore = filePathStore;
+    private readonly IFileStore _filePathStore = filePathStore;
 
     public override async Task<Empty> Upload(Protos.File request, ServerCallContext context)
     {
-        if (_filePathStore.PathByFileName.TryGetValue(request.FileName, out _))
+        if (_filePathStore.FilesByName.TryGetValue(request.FileName, out var wrapper) && wrapper.File.Intact)
+        {
             throw GetFileAlreadyExistsException(request.FileName, nameof(request.FileName));
-
-        var path = Path.Combine(Path.GetTempPath(), request.FileName);
-
-        await System.IO.File.WriteAllBytesAsync(request.FileName, request.FileBytes.ToByteArray());
-
-        _filePathStore.PathByFileName.TryAdd(request.FileName, path);
+        }
+        else if (wrapper is null)
+        {
+            var metadata = Domain.ValueObjects.FileMetadata.Create(request.FileName);
+            var file = Domain.Entities.File.Create(metadata);
+            await file.SaveChunk(request.FileBytes.ToByteArray(), request.IsFinal, context.CancellationToken);
+            var newFileWrapper = new FileWrapper() { File = file };
+            _filePathStore.FilesByName.TryAdd(request.FileName, newFileWrapper);
+        }
+        else
+        {
+            var file = wrapper.File;
+            await file.SaveChunk(request.FileBytes.ToByteArray(), request.IsFinal, context.CancellationToken);
+        }
 
         return new Empty();
     }
@@ -34,10 +44,15 @@ public class UnaryFrontBackGrpcService(IFilePathStore filePathStore)
     {
         var result = new ClearStoredFilesResponse()
         {
-            CleanedCount = _filePathStore.PathByFileName.Count
+            CleanedCount = _filePathStore.FilesByName.Count
         };
 
-        _filePathStore.PathByFileName.Clear();
+        foreach (var file in _filePathStore.FilesByName.Values.Select(x => x.File))
+        {
+            file.Delete();
+        }
+
+        _filePathStore.FilesByName.Clear();
 
         return Task.FromResult(result);
     }
