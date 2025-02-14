@@ -12,6 +12,7 @@ using Microsoft.IdentityModel.Tokens;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
+builder.Services.AddCors();
 builder.Services.AddGrpc(opt => 
 {
     opt.Interceptors.Add<ExceptionInterceptor>();
@@ -52,12 +53,27 @@ builder.Services
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
+app.UseCors(builder =>
+{
+    builder
+        .SetIsOriginAllowed(_ => true)
+        .AllowAnyMethod()
+        .AllowAnyHeader()
+        .AllowCredentials()
+        .WithExposedHeaders("Grpc-Status", "Grpc-Message", "Grpc-Encoding", "Grpc-Accept-Encoding");
+});
+
+app.UseGrpcWeb(new GrpcWebOptions()
+{
+    DefaultEnabled = true
+});
+
 app.MapGrpcService<AuthenticationGrpcService>();
 app.MapGrpcService<ChatGrpcService>();
 app.MapGrpcService<StreamingBackFrontGrpcService>();
 app.MapGrpcService<UnaryFrontBackGrpcService>();
 
-if(app.Environment.IsDevelopment())
+if (app.Environment.IsDevelopment())
 {
     app
         .MapGrpcReflectionService()
