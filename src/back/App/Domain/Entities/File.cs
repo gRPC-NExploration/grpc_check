@@ -61,13 +61,13 @@ public class File
         await using var fileStream = System.IO.File.OpenRead(Metadata.FilePath);
         _currentChunk ??= 1;
 
-        while(true)
+        while (true)
         {
             var numBytesRead = await fileStream.ReadAsync(buffer, cancellationToken);
 
             if (numBytesRead == 0)
             {
-                throw new IOException($"File {Metadata} was empty.");
+                break;
             }
 
             yield return buffer;
