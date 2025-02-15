@@ -5,6 +5,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>6b20cd4a-59f1-4cd3-8409-e262e50835b9</UserSecretsId>
+    <BuildFromDocker>false</BuildFromDocker>
   </PropertyGroup>
 
   <ItemGroup Condition="'$(BuildFromDocker)' == 'false'">
