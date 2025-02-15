@@ -21,7 +21,7 @@ public class File
         Metadata = metadata;
     }
 
-    public async Task SaveChunk(byte[] data, bool isFinal = true, CancellationToken cancellationToken = default)
+    public async Task SaveChunk(byte[] data, bool isFinal, CancellationToken cancellationToken)
     {
         if (Intact)
         {
@@ -34,16 +34,19 @@ public class File
             return;
         }
 
-        _hasContent = true;
-        _currentChunk ??= 1;
-        _fileStream ??= new System.IO.FileStream(Metadata.FilePath, FileMode.Create, FileAccess.Write, FileShare.None, ChunkSize, true);
+        if (data.Length is not 0)
+        {
+            _hasContent = true;
+            _currentChunk ??= 1;
+            _fileStream ??= new System.IO.FileStream(Metadata.FilePath, FileMode.Create, FileAccess.Write, FileShare.None, ChunkSize, true);
 
-        await _fileStream.WriteAsync(data, cancellationToken);
-        _currentChunk++;
+            await _fileStream.WriteAsync(data, cancellationToken);
+            _currentChunk++;
+        }
 
         if (isFinal)
         {
-            await _fileStream.DisposeAsync();
+            await _fileStream!.DisposeAsync();
             _fileStream = null;
             _currentChunk = null;
         }
@@ -65,7 +68,6 @@ public class File
         var buffer = new byte[ChunkSize];
 
         await using var fileStream = System.IO.File.OpenRead(Metadata.FilePath);
-        _currentChunk ??= 1;
 
         while (true)
         {
