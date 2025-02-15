@@ -23,12 +23,18 @@ public class File
 
     public async Task SaveChunk(byte[] data, bool isFinal = true, CancellationToken cancellationToken = default)
     {
+        if (Intact)
+        {
+            throw new InvalidOperationException("File already exists.");
+        }
+
         if (_currentChunk is null && isFinal)
         {
             await Save(data, cancellationToken);
             return;
         }
 
+        _hasContent = true;
         _currentChunk ??= 1;
         _fileStream ??= new System.IO.FileStream(Metadata.FilePath, FileMode.Create, FileAccess.Write, FileShare.None, ChunkSize, true);
 
