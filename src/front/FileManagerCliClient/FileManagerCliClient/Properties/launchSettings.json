@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "FileManagerCliClient": {
+      "commandName": "Project"
+    },
+    "Container (Dockerfile)": {
+      "commandName": "Docker"
+    }
+  }
+}
