@@ -4,7 +4,7 @@ import Header from "./components/Header";
 // import { User } from "./chat_pb";
 // import { ChatServiceClient } from "./chat_grpc_web_pb";
 // import ChatPage from "./pages/ChatPage";
-import { Chat, Streaming, Auth } from "../Protos";
+import { Chat, Stream, Auth } from "./api";
 import { useState, useRef } from "react";
 
 export const client = new Chat.app.ChatServiceClient(
