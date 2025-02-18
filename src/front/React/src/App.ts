@@ -1,18 +1,22 @@
 import "./App.css";
 import Header from "./components/Header";
 
-import { User } from "./chat_pb";
-import { ChatServiceClient } from "./chat_grpc_web_pb";
-import ChatPage from "./pages/ChatPage";
+// import { User } from "./chat_pb";
+// import { ChatServiceClient } from "./chat_grpc_web_pb";
+// import ChatPage from "./pages/ChatPage";
+import { Chat, Streaming, Auth } from "../Protos";
 import { useState, useRef } from "react";
 
-export const client = new ChatServiceClient(
+export const client = new Chat.app.ChatServiceClient(
   "http://localhost:8080",
   null,
   null
 );
 
 export default function App() {
+  // new Streaming.app.
+  // new Auth.app.AuthenticationServiceClient()
+
   const inputRef = useRef(null);
   const [submitted, setSubmitted] = useState(null);
   function joinHandler() {

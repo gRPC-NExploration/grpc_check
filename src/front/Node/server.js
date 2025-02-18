@@ -56,7 +56,12 @@ server.addService(protoDescriptor.ChatService.service, {
   receiveMsg,
 });
 
-server.bind(SERVER_URI, grpc.ServerCredentials.createInsecure());
+// server.bind(SERVER_URI, grpc.ServerCredentials.createInsecure());
+server.bindAsync(
+  "0.0.0.0".concat(":").concat(myPort),
+  grpc.ServerCredentials.createInsecure(),
+  (err, result) => (!err ? server.start() : logger.error(err))
+);
 
 server.start();
 console.log("Server is running!");

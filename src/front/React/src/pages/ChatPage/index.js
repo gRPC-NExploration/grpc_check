@@ -1,7 +1,7 @@
-import Chat from "./../../components/Chat";
-import UsersList from "./../../components/UsersList";
+import Chat from "../../components/Chat";
+import UsersList from "../../components/UsersList";
 import "./ChatPage.css";
-import { ChatMessage, ReceiveMsgRequest, Empty } from "./../../chat_pb";
+import { ChatMessage, ReceiveMsgRequest, Empty } from "../../chat_pb_old";
 import { useEffect, useState } from "react";
 
 export default function ChatPage({ client }) {
