@@ -17,8 +17,10 @@ service ChatService {
     rpc SendMessage(SendMessageRequest) returns (google.protobuf.Empty);
 }
 
+// Поменять на Request
 message Chat {
     string chat_name = 1;
+    // ListFrom
 }
 
 message JoinChatResponse {
