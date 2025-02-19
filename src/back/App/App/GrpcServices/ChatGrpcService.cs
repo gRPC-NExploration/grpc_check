@@ -27,14 +27,17 @@ public class ChatGrpcService(IChatProvider chatProvider, ICurrentUserService cur
             CreatedTime = Timestamp.FromDateTime(chat.CreatedDateTime)
         };
 
-        foreach (var message in chat.Messages.Values)
+        var requestedMessages = chat.Messages.Values.Where(x => x.SendTime > request.MessagesSince.ToDateTime()).SkipLast(1);
+        var messageStream = chat.ReadNewMessages(context.CancellationToken);
+
+        foreach (var message in requestedMessages)
         {
             response.Messages.Add(ConvertMessageToMessageResponse(message));
         }
 
         await responseStream.WriteAsync(response, context.CancellationToken);
 
-        await foreach (var message in chat.ReadNewMessages(context.CancellationToken))
+        await foreach (var message in messageStream)
         {
             response.Messages.Clear();
             response.Messages.Add(ConvertMessageToMessageResponse(message));
