@@ -12,16 +12,17 @@ using Microsoft.IdentityModel.Tokens;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddCors();
 builder.Services.AddGrpc(opt => 
 {
     opt.Interceptors.Add<ExceptionInterceptor>();
     opt.Interceptors.Add<ServerLoggingInterceptor>();
 });
+builder.Services.AddCors();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddGrpcReflection();
 
 // Other services
+builder.Services.AddSingleton<IncrementingCounter>();
 builder.Services.AddSingleton<IFileStore, FileStore>();
 builder.Services.AddSingleton<IChatProvider, ChatProvider>();
 builder.Services.AddSingleton<IBearerProvider, BearerProvider>();
@@ -53,6 +54,11 @@ builder.Services
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
+app.UseGrpcWeb(new GrpcWebOptions()
+{
+    DefaultEnabled = true
+});
+
 app.UseCors(builder =>
 {
     builder
@@ -63,15 +69,11 @@ app.UseCors(builder =>
         .WithExposedHeaders("Grpc-Status", "Grpc-Message", "Grpc-Encoding", "Grpc-Accept-Encoding");
 });
 
-app.UseGrpcWeb(new GrpcWebOptions()
-{
-    DefaultEnabled = true
-});
-
 app.MapGrpcService<AuthenticationGrpcService>();
 app.MapGrpcService<ChatGrpcService>();
 app.MapGrpcService<StreamingBackFrontGrpcService>();
 app.MapGrpcService<UnaryFrontBackGrpcService>();
+app.MapGrpcService<CounterGrpcService>();
 
 if (app.Environment.IsDevelopment())
 {
