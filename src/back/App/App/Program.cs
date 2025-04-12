@@ -22,7 +22,6 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddGrpcReflection();
 
 // Other services
-builder.Services.AddSingleton<IncrementingCounter>();
 builder.Services.AddSingleton<IFileStore, FileStore>();
 builder.Services.AddSingleton<IChatProvider, ChatProvider>();
 builder.Services.AddSingleton<IBearerProvider, BearerProvider>();
@@ -73,7 +72,6 @@ app.MapGrpcService<AuthenticationGrpcService>();
 app.MapGrpcService<ChatGrpcService>();
 app.MapGrpcService<StreamingBackFrontGrpcService>();
 app.MapGrpcService<UnaryFrontBackGrpcService>();
-app.MapGrpcService<CounterGrpcService>();
 
 if (app.Environment.IsDevelopment())
 {
