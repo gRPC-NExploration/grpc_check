@@ -9,9 +9,12 @@
         "lint": "eslint .",
         "format": "prettier --write \"src/**/*.{ts,tsx}\"",
         "preview": "vite preview",
-        "generate": "bunx buf generate ../../Protos/App"
+        "generate": "bunx protoc --ts_out ./proto --proto_path ../../Protos/App ../../Protos/App/*.proto"
     },
     "dependencies": {
+        "@protobuf-ts/grpcweb-transport": "^2.9.6",
+        "@protobuf-ts/plugin": "^2.9.6",
+        "@protobuf-ts/runtime": "^2.9.6",
         "react": "^19.0.0",
         "react-dom": "^19.0.0"
     },

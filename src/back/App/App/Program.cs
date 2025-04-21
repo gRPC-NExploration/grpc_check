@@ -53,11 +53,6 @@ builder.Services
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-app.UseGrpcWeb(new GrpcWebOptions()
-{
-    DefaultEnabled = true
-});
-
 app.UseCors(builder =>
 {
     builder
@@ -67,6 +62,14 @@ app.UseCors(builder =>
         .AllowCredentials()
         .WithExposedHeaders("Grpc-Status", "Grpc-Message", "Grpc-Encoding", "Grpc-Accept-Encoding");
 });
+
+app.UseGrpcWeb(new GrpcWebOptions()
+{
+    DefaultEnabled = true
+});
+
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapGrpcService<AuthenticationGrpcService>();
 app.MapGrpcService<ChatGrpcService>();
