@@ -12,6 +12,8 @@ public class AuthenticationGrpcService(IBearerProvider bearerProvider)
 
     public override Task<GetBearerTokenResponse> GetBearerToken(GetBearerTokenRequest request, ServerCallContext context)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(request.UserName);
+
         var result = new GetBearerTokenResponse()
         {
             BearerToken = _bearerProvider.Provide(request.UserName)

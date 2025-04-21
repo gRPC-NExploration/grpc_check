@@ -12,12 +12,12 @@ using Microsoft.IdentityModel.Tokens;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
+builder.Services.AddCors();
 builder.Services.AddGrpc(opt => 
 {
     opt.Interceptors.Add<ExceptionInterceptor>();
     opt.Interceptors.Add<ServerLoggingInterceptor>();
 });
-builder.Services.AddCors();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddGrpcReflection();
 

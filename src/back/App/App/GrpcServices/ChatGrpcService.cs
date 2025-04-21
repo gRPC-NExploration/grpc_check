@@ -18,6 +18,8 @@ public class ChatGrpcService(IChatProvider chatProvider, ICurrentUserService cur
 
     public override async Task Join(Chat request, IServerStreamWriter<JoinChatResponse> responseStream, ServerCallContext context)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(request.ChatName);
+
         var chat = _chatProvider.Provide(request.ChatName, _currentUserService.GetCurrentUserName());
 
         var response = new JoinChatResponse()
@@ -27,7 +29,9 @@ public class ChatGrpcService(IChatProvider chatProvider, ICurrentUserService cur
             CreatedTime = Timestamp.FromDateTime(chat.CreatedDateTime)
         };
 
-        var requestedMessages = chat.Messages.Values.Where(x => x.SendTime > request.MessagesSince.ToDateTime()).SkipLast(1);
+        var requestedMessages = request.MessagesSince is null 
+            ? chat.Messages.Values
+            : chat.Messages.Values.Where(x => x.SendTime > request.MessagesSince.ToDateTime()).SkipLast(1);
         var messageStream = chat.ReadNewMessages(context.CancellationToken);
 
         foreach (var message in requestedMessages)
