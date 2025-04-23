@@ -45,7 +45,7 @@ builder.Services
                 ValidateAudience = false,
                 ValidateIssuer = false,
                 ValidateActor = false,
-                ValidateLifetime = true,
+                ValidateLifetime = false,
                 IssuerSigningKey = JwtShared.SecurityKey
             };
     });
