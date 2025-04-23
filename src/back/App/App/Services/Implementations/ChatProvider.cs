@@ -19,6 +19,8 @@ public class ChatProvider
 
     public Chat Provide(string chatName, string currentUserName)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(chatName);
+
         if (!ChatByName.TryGetValue(chatName, out var chat))
         {
             chat = Chat.Create(chatName, currentUserName);
