@@ -32,7 +32,7 @@ public class ChatGrpcService(IChatProvider chatProvider, ICurrentUserService cur
         var requestedMessages = request.MessagesSince is null 
             ? chat.Messages.Values
             : chat.Messages.Values.Where(x => x.SendTime > request.MessagesSince.ToDateTime());
-        requestedMessages = requestedMessages.SkipLast(1).OrderBy(x => x.SendTime);
+        requestedMessages = requestedMessages.OrderBy(x => x.SendTime).SkipLast(1);
         var messageStream = chat.ReadNewMessages(context.CancellationToken);
 
         foreach (var message in requestedMessages)
