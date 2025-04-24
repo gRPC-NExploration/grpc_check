@@ -1,6 +1,6 @@
 import { GrpcWebFetchTransport } from '@protobuf-ts/grpcweb-transport';
 
 export const transport = new GrpcWebFetchTransport({
-    baseUrl: 'http://localhost:8080',
+    baseUrl: import.meta.env.VITE_GRPC_URL,
     format: 'binary',
 });
