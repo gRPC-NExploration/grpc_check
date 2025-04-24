@@ -15,7 +15,7 @@ const ChatAuthPlaceholder = () => {
     const [isLoginOpen, setIsLoginOpen] = useState(false);
 
     return (
-        <div className="bg-sidebar flex size-full flex-col items-center justify-center rounded-lg">
+        <div className="bg-sidebar flex size-full flex-col items-center justify-center rounded-lg border-1">
             <Card className="max-[500px]:bg-sidebar w-full max-w-[350px] max-[500px]:border-none max-[500px]:shadow-none">
                 <CardHeader className="max-[376px]:px-2">
                     <CardTitle className="flex flex-col items-center gap-2 text-center text-lg">

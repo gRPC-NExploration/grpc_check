@@ -158,7 +158,7 @@ const SidebarUser = () => {
 
 const Sidebar = ({ links }: SidebarProps) => {
     return (
-        <aside className="bg-sidebar flex h-full flex-col items-center justify-between rounded-lg border-r-1 p-2">
+        <aside className="bg-sidebar flex h-full flex-col items-center justify-between rounded-lg border-1 p-2">
             <SidebarLinks links={links} />
             <SidebarUser />
         </aside>

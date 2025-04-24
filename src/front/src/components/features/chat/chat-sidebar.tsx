@@ -13,7 +13,7 @@ const ChatSidebar = () => {
     const [isCreateOrJoinFormOpen, setIsCreateOrJoinFormOpen] = useState(false);
 
     return (
-        <section className="bg-sidebar flex h-full w-full flex-col overflow-hidden rounded-lg md:w-[320px]">
+        <section className="bg-sidebar flex h-full w-full flex-col overflow-hidden rounded-lg border-1 md:w-[320px]">
             <div className="flex items-center justify-between border-b-1 px-4 py-2">
                 <h1 className="text-lg font-bold" contentEditable>
                     Чаты

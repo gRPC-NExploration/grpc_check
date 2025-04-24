@@ -32,7 +32,7 @@ const ChatWindow = () => {
     return (
         <section
             className={cn(
-                'bg-sidebar flex h-full w-full flex-col overflow-hidden rounded-lg',
+                'bg-sidebar flex h-full w-full flex-col overflow-hidden rounded-lg border-1',
                 isSmallScreen && 'absolute top-0 left-0 h-dvh rounded-none',
             )}
         >
