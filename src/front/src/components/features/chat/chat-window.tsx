@@ -3,21 +3,13 @@ import { MessagesSquare, X } from 'lucide-react';
 import ChatWindowForm from '@/components/features/chat/chat-window-form.tsx';
 import ChatWindowList from '@/components/features/chat/chat-window-list.tsx';
 import { Button } from '@/components/ui/button.tsx';
-import { useMediaQuery } from '@/lib/hooks/use-media-query.ts';
 import { useChat } from '@/lib/providers/chat-provider.tsx';
-import { cn } from '@/lib/utils/tw-merge.ts';
 
 const ChatWindow = () => {
     const { activeChat, cancelStream } = useChat();
-    const isSmallScreen = useMediaQuery(768);
 
     return (
-        <section
-            className={cn(
-                'bg-sidebar flex h-full w-full flex-col overflow-hidden rounded-lg border-1',
-                isSmallScreen && 'absolute top-0 left-0 h-dvh rounded-none',
-            )}
-        >
+        <section className="bg-sidebar flex h-full w-full flex-col overflow-hidden rounded-lg border-1 max-[769px]:absolute max-[769px]:top-0 max-[769px]:left-0 max-[769px]:h-dvh max-[769px]:rounded-none">
             {activeChat ? (
                 <>
                     <div className="flex items-center justify-between border-b-1 px-4 py-2">
