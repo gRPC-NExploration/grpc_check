@@ -1,6 +1,34 @@
+import { RouterProvider, createRouter } from '@tanstack/react-router';
 import { createRoot } from 'react-dom/client';
 
-import App from './App.tsx';
-import './index.css';
+import { AuthProvider } from '@/lib/providers/auth-provider.tsx';
+import { ChatProvider } from '@/lib/providers/chat-provider.tsx';
+import { GrpcProvider } from '@/lib/providers/grpc-provider.tsx';
+import { ThemeProvider } from '@/lib/providers/theme-provider.tsx';
+import { routeTree } from '@/routeTree.gen.ts';
 
-createRoot(document.getElementById('root')!).render(<App />);
+import './styles/globals.css';
+
+const router = createRouter({ routeTree });
+
+declare module '@tanstack/react-router' {
+    interface Register {
+        router: typeof router;
+    }
+}
+
+const rootElement = document.getElementById('root')!;
+if (!rootElement.innerHTML) {
+    const root = createRoot(rootElement);
+    root.render(
+        <ThemeProvider>
+            <GrpcProvider>
+                <AuthProvider>
+                    <ChatProvider>
+                        <RouterProvider router={router} />
+                    </ChatProvider>
+                </AuthProvider>
+            </GrpcProvider>
+        </ThemeProvider>,
+    );
+}
