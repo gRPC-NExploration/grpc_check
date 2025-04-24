@@ -1,6 +1,6 @@
 ﻿using App.Protos;
 using App.Services.Contracts;
-
+using Common.Protos;
 using Google.Protobuf.WellKnownTypes;
 
 using Grpc.Core;
@@ -52,11 +52,18 @@ public class ChatGrpcService(IChatProvider chatProvider, ICurrentUserService cur
 
     public override async Task<Empty> SendMessage(SendMessageRequest request, ServerCallContext context)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(request.Uid.Value);
+
+        if (!Guid.TryParse(request.Uid.Value, out var messageId))
+        {
+            throw new InvalidDataException("Uid wasn't representing actual UUID format");
+        }
+
         var chat = _chatProvider.Provide(request.ChatName, _currentUserService.GetCurrentUserName());
 
         Domain.Entities.MessageContent messageContent = Domain.Entities.MessageContent.Create(request.MessageText.MessageText);
 
-        await chat.SendMessage(messageContent, _currentUserService.GetCurrentUserName(), context.CancellationToken);
+        await chat.SendMessage(messageId, messageContent, _currentUserService.GetCurrentUserName(), context.CancellationToken);
 
         return new();
     }
@@ -65,6 +72,7 @@ public class ChatGrpcService(IChatProvider chatProvider, ICurrentUserService cur
     {
         return new()
         {
+            Uid = new Uuid() { Value = message.Id.ToString() },
             ChatName = message.Chat.ChatName,
             Message = new()
             {

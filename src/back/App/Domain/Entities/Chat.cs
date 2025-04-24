@@ -24,12 +24,12 @@ public class Chat
         CreatedDateTime = created;
     }
 
-    public async Task<Message> SendMessage(MessageContent messageContent, string sender, CancellationToken cancellationToken)
+    public async Task<Message> SendMessage(Guid messageId, MessageContent messageContent, string sender, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(sender))
             throw new ArgumentException("Sender name was empty.", nameof(sender));
 
-        var message = Message.Create(this, messageContent, sender);
+        var message = Message.Create(messageId, this, messageContent, sender);
 
         _messages[message.Id] = message;
 

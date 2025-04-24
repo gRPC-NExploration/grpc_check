@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package common;
+
+option csharp_namespace = "Common.Protos";
+
+// Универсальный уникальный идентификатор 
+message Uuid {
+    // Значение идентификатора
+    string value = 1;
+}

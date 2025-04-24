@@ -8,7 +8,8 @@ FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 COPY ./src/back/App .
-COPY ./Protos/App ./App/Protos
+COPY ./Protos/App ./App/Protos/App
+COPY ./Protos/Common ./App/Protos/Common
 RUN dotnet restore "./App/App.csproj"
 RUN dotnet build "./App/App.csproj" -c $BUILD_CONFIGURATION -o /app/build /p:BuildFromDocker=true
 

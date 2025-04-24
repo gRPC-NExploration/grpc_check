@@ -10,6 +10,7 @@
 
   <ItemGroup Condition="'$(BuildFromDocker)' == 'false'">
     <Protobuf Include="../../../../Protos/App/*.proto;" GrpcServices="Server" Access="Public" Link="Protos\App\%(Filename)%(Extension)" ProtoRoot="../../../../" />
+    <Protobuf Include="../../../../Protos/Common/*.proto;" Access="Public" Link="Protos\Common\%(Filename)%(Extension)" ProtoRoot="../../../../" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(BuildFromDocker)' == 'true'">
