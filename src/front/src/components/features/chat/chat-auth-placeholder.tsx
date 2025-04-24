@@ -16,9 +16,9 @@ const ChatAuthPlaceholder = () => {
 
     return (
         <div className="bg-sidebar flex size-full flex-col items-center justify-center rounded-lg">
-            <Card className="w-[350px]">
-                <CardHeader>
-                    <CardTitle className="flex flex-col items-center gap-2 text-lg">
+            <Card className="w-full max-w-[350px] max-[500px]:border-none max-[500px]:shadow-none">
+                <CardHeader className="max-[376px]:px-2">
+                    <CardTitle className="flex flex-col items-center gap-2 text-center text-lg">
                         <ShieldUser className="size-14" strokeWidth={1} />
                         Требуется авторизация
                     </CardTitle>
