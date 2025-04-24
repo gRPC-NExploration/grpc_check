@@ -27,10 +27,11 @@ const Submit = () => {
 };
 
 const CreateOrJoinForm = ({ isOpen, onClose }: CreateOrJoinFormProps) => {
-    const { addChat } = useChat();
+    const { addChat, joinRoom } = useChat();
 
     const formAction = async (formData: FormData) => {
         addChat(formData.get('chatName') as string);
+        joinRoom(formData.get('chatName') as string);
         onClose();
     };
 
