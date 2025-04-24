@@ -9,12 +9,12 @@
   </PropertyGroup>
 
   <ItemGroup Condition="'$(BuildFromDocker)' == 'false'">
-    <Protobuf Include="../../../../Protos/App/*.proto;" GrpcServices="Server" Access="Public" Link="Protos\App\%(Filename)%(Extension)" ProtoRoot="../../../../" />
-    <Protobuf Include="../../../../Protos/Common/*.proto;" Access="Public" Link="Protos\Common\%(Filename)%(Extension)" ProtoRoot="../../../../" />
+    <Protobuf Include="../../../../Protos/App/*.proto;" GrpcServices="Server" Access="Public" Link="Protos\App\%(Filename)%(Extension)" ProtoRoot="../../../../Protos" />
+    <Protobuf Include="../../../../Protos/Common/*.proto;" Access="Public" Link="Protos\Common\%(Filename)%(Extension)" ProtoRoot="../../../../Protos" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(BuildFromDocker)' == 'true'">
-    <Protobuf Include="Protos/**/*.proto;" GrpcServices="Server" Access="Public" />
+    <Protobuf Include="Protos/**/*.proto;" GrpcServices="Server" Access="Public" ProtoRoot="./Protos" />
   </ItemGroup>
 	
   <ItemGroup>
