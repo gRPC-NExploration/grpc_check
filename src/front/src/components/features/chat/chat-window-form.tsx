@@ -4,12 +4,13 @@ import { isMobile } from 'react-device-detect';
 
 import { Button } from '@/components/ui/button.tsx';
 import { useChat } from '@/lib/providers/chat-provider.tsx';
+import { cn } from '@/lib/utils/tw-merge.ts';
 
 import { Message } from '../../../../proto/chat_service.ts';
 
 const ChatWindowForm = () => {
     const [message, setMessage] = useState<Message>({ messageText: '' });
-    const { sendMessage } = useChat();
+    const { sendMessage, isChatFetched } = useChat();
 
     const inputRef = useRef<HTMLDivElement>(null);
 
@@ -66,16 +67,26 @@ const ChatWindowForm = () => {
         >
             <div className="relative w-full max-w-full overflow-hidden">
                 {message.messageText === '' && (
-                    <span className="text-muted-foreground pointer-events-none absolute top-2 left-3 text-sm">
+                    <span
+                        className={cn(
+                            'text-muted-foreground pointer-events-none absolute top-2 left-3 text-sm',
+                            !isChatFetched &&
+                                'pointer-events-none cursor-not-allowed opacity-50',
+                        )}
+                    >
                         Сообщение...
                     </span>
                 )}
                 <div
                     ref={inputRef}
-                    contentEditable
+                    contentEditable={isChatFetched}
                     role="textbox"
                     aria-multiline="true"
-                    className="chat-input-scroll max-h-60 min-h-9 w-full overflow-y-auto rounded-md border bg-transparent px-3 py-2 text-base leading-[1.2] break-words whitespace-pre-wrap shadow-xs outline-none focus:outline-none"
+                    className={cn(
+                        'chat-input-scroll max-h-60 min-h-9 w-full overflow-y-auto rounded-md border bg-transparent px-3 py-2 text-base leading-[1.2] break-words whitespace-pre-wrap shadow-xs outline-none focus:outline-none',
+                        !isChatFetched &&
+                            'pointer-events-none cursor-not-allowed opacity-50',
+                    )}
                     onInput={handleInput}
                     onKeyDown={handleKeyDown}
                     suppressContentEditableWarning
@@ -88,7 +99,7 @@ const ChatWindowForm = () => {
             <Button
                 type="submit"
                 size="icon"
-                disabled={!message?.messageText.trim()}
+                disabled={!message?.messageText.trim() || !isChatFetched}
             >
                 <SendHorizonal />
             </Button>

@@ -18,6 +18,8 @@ interface IChatProviderContext {
     chats: string[];
     activeChat: string;
     messages: MessageResponse[];
+    isNewRoom: boolean;
+    isChatFetched: boolean;
     setChats: (chats: string[]) => void;
     setActiveChat: (chatName: string) => void;
     addChat: (chatName: string) => void;
@@ -32,6 +34,8 @@ const initialState: IChatProviderContext = {
     chats: ['General'],
     activeChat: '',
     messages: [],
+    isNewRoom: false,
+    isChatFetched: false,
     setChats: () => null,
     setActiveChat: () => null,
     addChat: () => null,
@@ -50,6 +54,8 @@ export const ChatProvider = ({ children }: PropsWithChildren) => {
 
     const [messages, setMessages] = useState<MessageResponse[]>([]);
     const [activeChat, setActiveChat] = useState<string>('');
+    const [isNewRoom, setIsNewRoom] = useState<boolean>(false);
+    const [isChatFetched, setIsChatFetched] = useState<boolean>(false);
     const [chats, setChats] = useState<string[]>(() => {
         const stored = localStorage.getItem('chats');
         return stored ? JSON.parse(stored) : initialState.chats;
@@ -75,7 +81,10 @@ export const ChatProvider = ({ children }: PropsWithChildren) => {
     const cancelStream = () => {
         if (abortControllerRef.current) {
             console.log('Attempting to abort gRPC stream...');
+            setMessages([]);
             setActiveChat('');
+            setIsChatFetched(false);
+            setIsNewRoom(false);
             abortControllerRef.current.abort();
             abortControllerRef.current = null;
             console.log('gRPC stream aborted.');
@@ -84,11 +93,10 @@ export const ChatProvider = ({ children }: PropsWithChildren) => {
 
     const joinRoom = async (chatName: string) => {
         cancelStream();
+        setMessages([]);
         setActiveChat(chatName);
 
         if (chatName && token && chatService) {
-            setMessages([]);
-
             const controller = new AbortController();
             abortControllerRef.current = controller;
 
@@ -110,7 +118,15 @@ export const ChatProvider = ({ children }: PropsWithChildren) => {
                         break;
                     }
 
+                    setIsChatFetched(true);
+
                     if (res.messages) {
+                        if (res.messages.length === 0) {
+                            setIsNewRoom(true);
+                        } else {
+                            setIsNewRoom(false);
+                        }
+
                         setMessages(prevState => [
                             ...prevState,
                             ...res.messages,
@@ -125,6 +141,7 @@ export const ChatProvider = ({ children }: PropsWithChildren) => {
                     );
                 } else {
                     console.error('gRPC stream error:', error); // Log other errors
+                    cancelStream();
                     showErrorToast(error as RpcError);
                 }
             } finally {
@@ -178,6 +195,8 @@ export const ChatProvider = ({ children }: PropsWithChildren) => {
                 chats,
                 activeChat,
                 messages,
+                isNewRoom,
+                isChatFetched,
                 setChats,
                 setActiveChat,
                 addChat,
