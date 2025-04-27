@@ -7,17 +7,23 @@ import {
     useRef,
     useState,
 } from 'react';
+import { v4 as uuidv4 } from 'uuid';
 
 import { useAuth } from '@/lib/providers/auth-provider.tsx';
 import { useGrpc } from '@/lib/providers/grpc-provider.tsx';
 import { showErrorToast } from '@/lib/utils/toastUtils.ts';
 
-import { Message, MessageResponse } from '../../../proto/chat_service.ts';
+import { Message, MessageResponse } from '../../../proto/App/chat_service.ts';
+import { Timestamp } from '../../../proto/google/protobuf/timestamp.ts';
+
+export interface IMessageResponse extends MessageResponse {
+    isPending?: boolean;
+}
 
 interface IChatProviderContext {
     chats: string[];
     activeChat: string;
-    messages: MessageResponse[];
+    messages: IMessageResponse[];
     isNewRoom: boolean;
     isChatFetched: boolean;
     setChats: (chats: string[]) => void;
@@ -49,10 +55,10 @@ const initialState: IChatProviderContext = {
 const ChatProviderContext = createContext<IChatProviderContext>(initialState);
 
 export const ChatProvider = ({ children }: PropsWithChildren) => {
-    const { token } = useAuth();
+    const { token, userName } = useAuth();
     const { chatService } = useGrpc();
 
-    const [messages, setMessages] = useState<MessageResponse[]>([]);
+    const [messages, setMessages] = useState<IMessageResponse[]>([]);
     const [activeChat, setActiveChat] = useState<string>('');
     const [isNewRoom, setIsNewRoom] = useState<boolean>(false);
     const [isChatFetched, setIsChatFetched] = useState<boolean>(false);
@@ -93,7 +99,6 @@ export const ChatProvider = ({ children }: PropsWithChildren) => {
 
     const joinRoom = async (chatName: string) => {
         cancelStream();
-        setMessages([]);
         setActiveChat(chatName);
 
         if (chatName && token && chatService) {
@@ -127,20 +132,48 @@ export const ChatProvider = ({ children }: PropsWithChildren) => {
                             setIsNewRoom(false);
                         }
 
-                        setMessages(prevState => [
-                            ...prevState,
-                            ...res.messages,
-                        ]);
+                        setMessages(prevState => {
+                            const unconfirmedMessages: IMessageResponse[] = [];
+
+                            const newState: IMessageResponse[] =
+                                prevState?.filter(localMsg => {
+                                    const isConfirmedByServer =
+                                        res.messages?.some(
+                                            serverMsg =>
+                                                serverMsg.uid?.value ===
+                                                    localMsg.uid?.value &&
+                                                serverMsg.senderName ===
+                                                    localMsg.senderName,
+                                        );
+
+                                    if (
+                                        localMsg.isPending &&
+                                        isConfirmedByServer
+                                    ) {
+                                        return false;
+                                    } else if (
+                                        localMsg.isPending &&
+                                        !isConfirmedByServer
+                                    ) {
+                                        unconfirmedMessages.push(localMsg);
+                                        return false;
+                                    } else {
+                                        return true;
+                                    }
+                                }) ?? [];
+
+                            return [
+                                ...newState,
+                                ...res.messages,
+                                ...unconfirmedMessages,
+                            ];
+                        });
                     }
                 }
                 console.log('Stream finished naturally.');
             } catch (error) {
-                if ((error as RpcError)?.code === 'CANCELLED') {
-                    console.log(
-                        'Stream successfully cancelled via AbortController.',
-                    );
-                } else {
-                    console.error('gRPC stream error:', error); // Log other errors
+                if ((error as RpcError)?.code !== 'CANCELLED') {
+                    console.error('gRPC stream error:', error);
                     cancelStream();
                     showErrorToast(error as RpcError);
                 }
@@ -161,9 +194,25 @@ export const ChatProvider = ({ children }: PropsWithChildren) => {
     };
 
     const sendMessage = async (message: Message) => {
+        const id = {
+            value: uuidv4(),
+        };
+
         try {
+            setMessages(prevState => [
+                ...prevState,
+                {
+                    uid: id,
+                    isPending: true,
+                    message: message,
+                    senderName: userName as string,
+                    chatName: activeChat,
+                    messageSendTime: Timestamp.now(),
+                },
+            ]);
             await chatService.sendMessage(
                 {
+                    uid: id,
                     chatName: activeChat,
                     messageText: message,
                 },

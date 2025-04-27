@@ -2,8 +2,8 @@ import { PropsWithChildren, createContext, useContext } from 'react';
 
 import { authService, chatService } from '@/lib/grpc/clients.ts';
 
-import { IAuthenticationServiceClient } from '../../../proto/authentication_service.client.ts';
-import { IChatServiceClient } from '../../../proto/chat_service.client.ts';
+import { IAuthenticationServiceClient } from '../../../proto/App/authentication_service.client.ts';
+import { IChatServiceClient } from '../../../proto/App/chat_service.client.ts';
 
 interface IGrpcProviderContext {
     authService: IAuthenticationServiceClient;

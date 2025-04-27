@@ -15,9 +15,7 @@ const ChatSidebar = () => {
     return (
         <section className="bg-sidebar flex h-full w-full flex-col overflow-hidden rounded-lg border-1 md:w-[320px]">
             <div className="flex items-center justify-between border-b-1 px-4 py-2">
-                <h1 className="text-lg font-bold" contentEditable>
-                    Чаты
-                </h1>
+                <h1 className="text-lg font-bold">Чаты</h1>
                 <Button
                     variant="outline"
                     size="icon"

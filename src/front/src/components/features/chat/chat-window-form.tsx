@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button.tsx';
 import { useChat } from '@/lib/providers/chat-provider.tsx';
 import { cn } from '@/lib/utils/tw-merge.ts';
 
-import { Message } from '../../../../proto/chat_service.ts';
+import { Message } from '../../../../proto/App/chat_service.ts';
 
 const ChatWindowForm = () => {
     const [message, setMessage] = useState<Message>({ messageText: '' });
