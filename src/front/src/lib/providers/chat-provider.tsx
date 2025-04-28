@@ -86,14 +86,12 @@ export const ChatProvider = ({ children }: PropsWithChildren) => {
 
     const cancelStream = () => {
         if (abortControllerRef.current) {
-            console.log('Attempting to abort gRPC stream...');
             setMessages([]);
             setActiveChat('');
             setIsChatFetched(false);
             setIsNewRoom(false);
             abortControllerRef.current.abort();
             abortControllerRef.current = null;
-            console.log('gRPC stream aborted.');
         }
     };
 
@@ -106,7 +104,6 @@ export const ChatProvider = ({ children }: PropsWithChildren) => {
             abortControllerRef.current = controller;
 
             try {
-                console.log(`Joining room: ${chatName}`);
                 const stream = chatService.join(
                     { chatName: chatName },
                     {
@@ -117,9 +114,6 @@ export const ChatProvider = ({ children }: PropsWithChildren) => {
 
                 for await (const res of stream.responses) {
                     if (controller.signal.aborted) {
-                        console.log(
-                            'Stream processing stopped due to abort signal.',
-                        );
                         break;
                     }
 
@@ -170,10 +164,8 @@ export const ChatProvider = ({ children }: PropsWithChildren) => {
                         });
                     }
                 }
-                console.log('Stream finished naturally.');
             } catch (error) {
                 if ((error as RpcError)?.code !== 'CANCELLED') {
-                    console.error('gRPC stream error:', error);
                     cancelStream();
                     showErrorToast(error as RpcError);
                 }
@@ -183,9 +175,6 @@ export const ChatProvider = ({ children }: PropsWithChildren) => {
                 }
             }
         } else {
-            console.log(
-                'No chatName provided or user not authenticated, ensuring stream is cancelled.',
-            );
             cancelStream();
             if (messages.length > 0) {
                 setMessages([]);
@@ -210,6 +199,11 @@ export const ChatProvider = ({ children }: PropsWithChildren) => {
                     messageSendTime: Timestamp.now(),
                 },
             ]);
+
+            if (isNewRoom) {
+                setIsNewRoom(false);
+            }
+
             await chatService.sendMessage(
                 {
                     uid: id,
@@ -227,9 +221,6 @@ export const ChatProvider = ({ children }: PropsWithChildren) => {
 
     useEffect(() => {
         return () => {
-            console.log(
-                'ChatProvider unmounting or token changed, cancelling stream...',
-            );
             cancelStream();
         };
     }, [token]);
