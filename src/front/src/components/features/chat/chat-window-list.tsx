@@ -7,7 +7,7 @@ import ChatWindowMessage from '@/components/features/chat/chat-window-message.ts
 import { ScrollArea } from '@/components/ui/scroll-area.tsx';
 import { useIsVisible } from '@/lib/hooks/use-is-visible.ts';
 import { useAuth } from '@/lib/providers/auth-provider.tsx';
-import { useChat } from '@/lib/providers/chat-provider.tsx';
+import { IMessageResponse, useChat } from '@/lib/providers/chat-provider.tsx';
 
 import { Timestamp } from '../../../../proto/google/protobuf/timestamp.ts';
 
@@ -15,12 +15,16 @@ const ChatWindowList = () => {
     const { userName } = useAuth();
     const { messages, isNewRoom, isChatFetched } = useChat();
 
-    const [newHiddenMessages, setNewHiddenMessages] = useState<number>(0);
+    const [isScrollBubbleVisible, setScrollBubbleVisible] =
+        useState<boolean>(false);
+    const [newHiddenMessagesArray, setNewHiddenMessagesArray] = useState<
+        IMessageResponse[]
+    >([]);
 
     const scrollAreaRef = useRef<HTMLDivElement>(null);
-    const bottomRef = useRef<HTMLDivElement>(null);
+    const unreadBubbleRef = useRef<HTMLDivElement>(null);
 
-    const isBottomVisible = useIsVisible(bottomRef);
+    const isUnreadBubbleVisible = useIsVisible(unreadBubbleRef);
 
     const getViewport = (): HTMLDivElement | null => {
         return scrollAreaRef.current?.querySelector(
@@ -33,10 +37,11 @@ const ChatWindowList = () => {
     };
 
     const handleClickScroll = () => {
-        const viewport = getViewport();
-        if (viewport) {
-            scrollToBottom(viewport);
-            setNewHiddenMessages(0);
+        if (unreadBubbleRef.current) {
+            unreadBubbleRef.current.scrollIntoView({
+                behavior: 'smooth',
+                block: 'center',
+            });
         }
     };
 
@@ -65,24 +70,34 @@ const ChatWindowList = () => {
 
             if (isBottom) {
                 scrollToBottom(viewport);
-                setNewHiddenMessages(0);
+                setScrollBubbleVisible(false);
+                setNewHiddenMessagesArray([]);
             }
 
             if (!isBottom && isUserMessage) {
                 scrollToBottom(viewport);
+                setScrollBubbleVisible(false);
+                setNewHiddenMessagesArray([]);
             }
 
             if (!isBottom && !isUserMessage) {
-                setNewHiddenMessages(prevState => prevState + 1);
+                setNewHiddenMessagesArray(prevState => [
+                    ...prevState,
+                    messages[messages.length - 1],
+                ]);
+                setScrollBubbleVisible(true);
             }
         }
     }, [messages, userName]);
 
     useEffect(() => {
-        if (newHiddenMessages >= 1 && isBottomVisible) {
-            setNewHiddenMessages(0);
+        if (newHiddenMessagesArray.length >= 1 && isUnreadBubbleVisible) {
+            setScrollBubbleVisible(false);
+            setTimeout(() => {
+                setNewHiddenMessagesArray([]);
+            }, 5000);
         }
-    }, [isBottomVisible, newHiddenMessages]);
+    }, [isUnreadBubbleVisible, newHiddenMessagesArray.length]);
 
     return (
         <ScrollArea
@@ -140,24 +155,26 @@ const ChatWindowList = () => {
                                                     isNewDate={isNewDate}
                                                     messageTime={messageTime}
                                                     messageDate={messageDate}
+                                                    unreadBubbleRef={
+                                                        message ===
+                                                        newHiddenMessagesArray[0]
+                                                            ? unreadBubbleRef
+                                                            : null
+                                                    }
                                                 />
                                             );
                                         })}
-                                    <span
-                                        ref={bottomRef}
-                                        className="invisible absolute bottom-0 left-0 h-[100px] w-full"
-                                    ></span>
                                 </div>
                             </div>
-                            {newHiddenMessages >= 1 && (
+                            {isScrollBubbleVisible && (
                                 <div
                                     onClick={handleClickScroll}
-                                    className="bg-sidebar-primary absolute right-5 bottom-5 flex size-12 cursor-pointer items-center justify-center rounded-full"
+                                    className="bg-sidebar-accent text-sidebar-accent-foreground absolute right-5 bottom-5 flex size-12 cursor-pointer items-center justify-center rounded-full border shadow"
                                 >
                                     <ChevronDown />
 
-                                    <span className="bg-accent absolute -top-5 left-1/2 -translate-x-1/2 rounded-full p-2 text-center text-sm leading-2">
-                                        {newHiddenMessages}
+                                    <span className="bg-chart-1 absolute -top-5 left-1/2 -translate-x-1/2 rounded-full border p-2 text-center text-sm leading-2 text-white shadow">
+                                        {newHiddenMessagesArray.length}
                                     </span>
                                 </div>
                             )}

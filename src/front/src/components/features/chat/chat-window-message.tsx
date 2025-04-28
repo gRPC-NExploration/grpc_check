@@ -1,4 +1,5 @@
 import { Check, Clock } from 'lucide-react';
+import { Ref } from 'react';
 
 import { IMessageResponse } from '@/lib/providers/chat-provider.tsx';
 import { cn } from '@/lib/utils/tw-merge.ts';
@@ -9,6 +10,7 @@ interface ChatWindowMessageProps {
     isNewDate: boolean;
     messageTime: string | undefined;
     messageDate: string | undefined;
+    unreadBubbleRef?: Ref<HTMLDivElement>;
 }
 
 const ChatWindowMessage = ({
@@ -17,9 +19,19 @@ const ChatWindowMessage = ({
     isNewDate,
     messageTime,
     messageDate,
+    unreadBubbleRef,
 }: ChatWindowMessageProps) => {
     return (
         <>
+            {unreadBubbleRef && (
+                <div
+                    ref={unreadBubbleRef}
+                    className="bg-muted mx-auto rounded-full px-2 py-1 text-sm"
+                >
+                    Непрочитанные сообщения
+                </div>
+            )}
+
             {isNewDate && (
                 <div className="bg-muted mx-auto rounded-full px-2 py-1 text-sm">
                     {messageDate}
