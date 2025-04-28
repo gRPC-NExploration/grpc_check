@@ -1,42 +1,60 @@
+import { format } from 'date-fns';
 import { Check, Clock } from 'lucide-react';
 import { Ref } from 'react';
 
 import { IMessageResponse } from '@/lib/providers/chat-provider.tsx';
 import { cn } from '@/lib/utils/tw-merge.ts';
 
+import { Timestamp } from '../../../../proto/google/protobuf/timestamp.ts';
+
 interface ChatWindowMessageProps {
     userName: string | null;
     message: IMessageResponse;
-    isNewDate: boolean;
-    messageTime: string | undefined;
-    messageDate: string | undefined;
-    unreadBubbleRef?: Ref<HTMLDivElement>;
+    prevMessage: IMessageResponse;
+    unreadBubbleRef: Ref<HTMLDivElement>;
 }
 
 const ChatWindowMessage = ({
     userName,
     message,
-    isNewDate,
-    messageTime,
-    messageDate,
+    prevMessage,
     unreadBubbleRef,
 }: ChatWindowMessageProps) => {
+    const messageTime =
+        message.messageSendTime &&
+        format(Timestamp.toDate(message.messageSendTime), 'HH:mm');
+
+    const messageDate =
+        message.messageSendTime &&
+        format(Timestamp.toDate(message.messageSendTime), 'dd.MM.yyyy');
+
+    const prevMessageDate =
+        prevMessage &&
+        prevMessage.messageSendTime &&
+        format(Timestamp.toDate(prevMessage.messageSendTime), 'dd.MM.yyyy');
+
+    const isNewDate = !prevMessageDate || prevMessageDate !== messageDate;
+
     return (
         <>
-            {unreadBubbleRef && (
-                <div
-                    ref={unreadBubbleRef}
-                    className="bg-muted mx-auto rounded-full px-2 py-1 text-sm"
-                >
-                    Непрочитанные сообщения
-                </div>
-            )}
+            <div
+                className={cn(
+                    'bg-muted mx-auto hidden rounded-full px-2 py-1 text-sm',
+                    isNewDate && 'block',
+                )}
+            >
+                {messageDate}
+            </div>
 
-            {isNewDate && (
-                <div className="bg-muted mx-auto rounded-full px-2 py-1 text-sm">
-                    {messageDate}
-                </div>
-            )}
+            <div
+                ref={unreadBubbleRef}
+                className={cn(
+                    'bg-muted mx-auto hidden rounded-full px-2 py-1 text-center text-sm',
+                    unreadBubbleRef && 'block',
+                )}
+            >
+                Непрочитанные сообщения
+            </div>
 
             <div
                 className={cn(

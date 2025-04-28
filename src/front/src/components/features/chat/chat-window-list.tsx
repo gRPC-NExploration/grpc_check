@@ -1,15 +1,13 @@
-import { format } from 'date-fns';
-import { ChevronDown, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 import ChatWindowEmptyPlaceholder from '@/components/features/chat/chat-window-empty-placeholder.tsx';
 import ChatWindowMessage from '@/components/features/chat/chat-window-message.tsx';
+import ChatWindowScrollBubble from '@/components/features/chat/chat-window-scroll-bubble.tsx';
 import { ScrollArea } from '@/components/ui/scroll-area.tsx';
 import { useIsVisible } from '@/lib/hooks/use-is-visible.ts';
 import { useAuth } from '@/lib/providers/auth-provider.tsx';
 import { IMessageResponse, useChat } from '@/lib/providers/chat-provider.tsx';
-
-import { Timestamp } from '../../../../proto/google/protobuf/timestamp.ts';
 
 const ChatWindowList = () => {
     const { userName } = useAuth();
@@ -17,13 +15,15 @@ const ChatWindowList = () => {
 
     const [isScrollBubbleVisible, setScrollBubbleVisible] =
         useState<boolean>(false);
-    const [newHiddenMessagesArray, setNewHiddenMessagesArray] = useState<
-        IMessageResponse[]
-    >([]);
+    const [unreadMessages, setUnreadMessages] = useState<IMessageResponse[]>(
+        [],
+    );
 
     const scrollAreaRef = useRef<HTMLDivElement>(null);
-    const unreadBubbleRef = useRef<HTMLDivElement>(null);
+    const unreadBubbleRef = useRef<HTMLDivElement | null>(null);
+    const bottomRef = useRef<HTMLDivElement | null>(null);
 
+    const isBottomVisible = useIsVisible(bottomRef);
     const isUnreadBubbleVisible = useIsVisible(unreadBubbleRef);
 
     const getViewport = (): HTMLDivElement | null => {
@@ -37,11 +37,18 @@ const ChatWindowList = () => {
     };
 
     const handleClickScroll = () => {
+        const viewport = getViewport();
+
         if (unreadBubbleRef.current) {
             unreadBubbleRef.current.scrollIntoView({
                 behavior: 'smooth',
                 block: 'center',
             });
+            setScrollBubbleVisible(false);
+        } else {
+            if (viewport) {
+                scrollToBottom(viewport);
+            }
         }
     };
 
@@ -71,17 +78,17 @@ const ChatWindowList = () => {
             if (isBottom) {
                 scrollToBottom(viewport);
                 setScrollBubbleVisible(false);
-                setNewHiddenMessagesArray([]);
+                setUnreadMessages([]);
             }
 
             if (!isBottom && isUserMessage) {
                 scrollToBottom(viewport);
                 setScrollBubbleVisible(false);
-                setNewHiddenMessagesArray([]);
+                setUnreadMessages([]);
             }
 
             if (!isBottom && !isUserMessage) {
-                setNewHiddenMessagesArray(prevState => [
+                setUnreadMessages(prevState => [
                     ...prevState,
                     messages[messages.length - 1],
                 ]);
@@ -91,13 +98,18 @@ const ChatWindowList = () => {
     }, [messages, userName]);
 
     useEffect(() => {
-        if (newHiddenMessagesArray.length >= 1 && isUnreadBubbleVisible) {
+        if (isUnreadBubbleVisible || isBottomVisible) {
             setScrollBubbleVisible(false);
-            setTimeout(() => {
-                setNewHiddenMessagesArray([]);
-            }, 5000);
+
+            const timerId = setTimeout(() => {
+                setUnreadMessages([]);
+            }, 3200);
+
+            return () => {
+                clearTimeout(timerId);
+            };
         }
-    }, [isUnreadBubbleVisible, newHiddenMessagesArray.length]);
+    }, [isUnreadBubbleVisible, isScrollBubbleVisible, isBottomVisible]);
 
     return (
         <ScrollArea
@@ -113,71 +125,38 @@ const ChatWindowList = () => {
                                 <div className="relative flex flex-col gap-2 pb-2">
                                     {messages &&
                                         messages.map((message, i) => {
-                                            const prevMessage = messages[i - 1];
-
-                                            const prevMessageDate =
-                                                prevMessage &&
-                                                prevMessage.messageSendTime &&
-                                                format(
-                                                    Timestamp.toDate(
-                                                        prevMessage.messageSendTime,
-                                                    ),
-                                                    'dd.MM.yyyy',
-                                                );
-
-                                            const messageDate =
-                                                message.messageSendTime &&
-                                                format(
-                                                    Timestamp.toDate(
-                                                        message.messageSendTime,
-                                                    ),
-                                                    'dd.MM.yyyy',
-                                                );
-
-                                            const messageTime =
-                                                message.messageSendTime &&
-                                                format(
-                                                    Timestamp.toDate(
-                                                        message.messageSendTime,
-                                                    ),
-                                                    'HH:mm',
-                                                );
-
-                                            const isNewDate =
-                                                !prevMessageDate ||
-                                                prevMessageDate !== messageDate;
-
                                             return (
                                                 <ChatWindowMessage
-                                                    key={i}
+                                                    key={message.uid?.value}
                                                     userName={userName}
                                                     message={message}
-                                                    isNewDate={isNewDate}
-                                                    messageTime={messageTime}
-                                                    messageDate={messageDate}
+                                                    prevMessage={
+                                                        messages[i - 1]
+                                                    }
                                                     unreadBubbleRef={
                                                         message ===
-                                                        newHiddenMessagesArray[0]
+                                                        unreadMessages[0]
                                                             ? unreadBubbleRef
                                                             : null
                                                     }
                                                 />
                                             );
                                         })}
+                                    <span
+                                        ref={bottomRef}
+                                        className="invisible absolute bottom-0 left-0 h-[100px] w-full"
+                                    ></span>
                                 </div>
                             </div>
-                            {isScrollBubbleVisible && (
-                                <div
-                                    onClick={handleClickScroll}
-                                    className="bg-sidebar-accent text-sidebar-accent-foreground absolute right-5 bottom-5 flex size-12 cursor-pointer items-center justify-center rounded-full border shadow"
-                                >
-                                    <ChevronDown />
 
-                                    <span className="bg-chart-1 absolute -top-5 left-1/2 -translate-x-1/2 rounded-full border p-2 text-center text-sm leading-2 text-white shadow">
-                                        {newHiddenMessagesArray.length}
-                                    </span>
-                                </div>
-                            )}
+                            <ChatWindowScrollBubble
+                                isVisible={
+                                    isScrollBubbleVisible &&
+                                    unreadMessages.length >= 1
+                                }
+                                handleClickScroll={handleClickScroll}
+                                unreadMessagesCount={unreadMessages.length}
+                            />
                         </>
                     ) : (
                         <ChatWindowEmptyPlaceholder />
