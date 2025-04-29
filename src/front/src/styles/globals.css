@@ -159,3 +159,7 @@
     background-color: rgba(100, 100, 100, 0.4);
     border-radius: 4px;
 }
+
+.progress-sonner {
+    gap: 16px !important;
+}

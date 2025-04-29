@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 
 import { AuthProvider } from '@/lib/providers/auth-provider.tsx';
 import { ChatProvider } from '@/lib/providers/chat-provider.tsx';
+import { FilesProvider } from '@/lib/providers/files-provider.tsx';
 import { GrpcProvider } from '@/lib/providers/grpc-provider.tsx';
 import { ThemeProvider } from '@/lib/providers/theme-provider.tsx';
 import { routeTree } from '@/routeTree.gen.ts';
@@ -25,7 +26,9 @@ if (!rootElement.innerHTML) {
             <GrpcProvider>
                 <AuthProvider>
                     <ChatProvider>
-                        <RouterProvider router={router} />
+                        <FilesProvider>
+                            <RouterProvider router={router} />
+                        </FilesProvider>
                     </ChatProvider>
                 </AuthProvider>
             </GrpcProvider>

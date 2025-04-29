@@ -11,7 +11,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { useAuth } from '@/lib/providers/auth-provider.tsx';
 import { useGrpc } from '@/lib/providers/grpc-provider.tsx';
-import { showErrorToast } from '@/lib/utils/toastUtils.ts';
+import { showErrorToast } from '@/lib/utils/toastUtils.tsx';
 
 import { Message, MessageResponse } from '../../../proto/App/chat_service.ts';
 import { Timestamp } from '../../../proto/google/protobuf/timestamp.ts';

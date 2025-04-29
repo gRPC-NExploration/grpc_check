@@ -3,7 +3,7 @@ import { PropsWithChildren, createContext, useContext, useState } from 'react';
 import { toast } from 'sonner';
 
 import { useGrpc } from '@/lib/providers/grpc-provider.tsx';
-import { showErrorToast } from '@/lib/utils/toastUtils.ts';
+import { showErrorToast } from '@/lib/utils/toastUtils.tsx';
 
 interface IAuthProviderContext {
     token: string | null;
