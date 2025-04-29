@@ -9,7 +9,7 @@
         "lint": "eslint .",
         "format": "prettier --write \"src/**/*.{ts,tsx}\"",
         "preview": "vite preview",
-        "generate": "bunx protoc --ts_out ./proto --proto_path ../../Protos ../../Protos/App/*.proto ../../Protos/Common/*.proto"
+        "generate": "bunx protoc --ts_out ./proto --proto_path ${PROTO_ROOT:-../../Protos} ${PROTO_ROOT:-../../Protos}/App/*.proto ${PROTO_ROOT:-../../Protos}/Common/*.proto"
     },
     "dependencies": {
         "@hookform/resolvers": "^5.0.1",
