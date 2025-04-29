@@ -39,14 +39,18 @@ public class StreamingBackFrontGrpcService(IFileStore filePathStore)
 
         var response = new DownloadResponse()
         {
-            Metadata = new FileMetadata { FileName = request.FileName }
+            Metadata = new FileMetadata 
+            { 
+                FileName = wrapper.File.Metadata.FileName,
+                FileSize = wrapper.File.Size,
+            }
         };
 
         await responseStream.WriteAsync(response, context.CancellationToken);
 
         var chunk = 1;
 
-        await foreach (var chunkData in wrapper.File.ReadChunked(context.CancellationToken))
+        await foreach (var chunkData in wrapper.File.ReadChunked(request.ChunkSize, context.CancellationToken))
         {
             response.Chunk = chunk++;
             response.Data = UnsafeByteOperations.UnsafeWrap(chunkData);
