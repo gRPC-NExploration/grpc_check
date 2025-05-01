@@ -20,13 +20,13 @@ export const Route = createFileRoute('/')({
 });
 
 function Chat() {
-    const { token, userName } = useAuth();
+    const { userName } = useAuth();
     const { activeChat } = useChat();
     const isSmallScreen = useMediaQuery(768);
 
     return (
         <>
-            {token && userName ? (
+            {userName ? (
                 <>
                     {isSmallScreen ? (
                         <>{activeChat ? <ChatWindow /> : <ChatSidebar />}</>

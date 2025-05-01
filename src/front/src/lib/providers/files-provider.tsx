@@ -9,7 +9,6 @@ import {
 import { toast } from 'sonner';
 
 import { CHUNK_SIZE } from '@/lib/constants/constants.ts';
-import { useAuth } from '@/lib/providers/auth-provider.tsx';
 import { useGrpc } from '@/lib/providers/grpc-provider.tsx';
 import { createBlob } from '@/lib/utils/create-blob.ts';
 import {
@@ -46,7 +45,6 @@ const FilesProviderContext = createContext<IFilesProviderContext>(initialState);
 
 export const FilesProvider = ({ children }: PropsWithChildren) => {
     const { unaryService, streamingService } = useGrpc();
-    const { token } = useAuth();
 
     const [files, setFiles] = useState<GetFileNamesResponse[]>([]);
     const [isFilesFetching, setIsFilesFetching] = useState<boolean>(false);
@@ -289,12 +287,7 @@ export const FilesProvider = ({ children }: PropsWithChildren) => {
 
     const clearFiles = async () => {
         await unaryService
-            .clearStoredFiles(
-                {},
-                {
-                    meta: { Authorization: `Bearer ${token}` },
-                },
-            )
+            .clearStoredFiles({})
             .then(() => {
                 setFiles([]);
                 setIsFilesFetching(false);

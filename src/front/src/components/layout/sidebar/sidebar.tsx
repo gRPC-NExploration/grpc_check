@@ -54,7 +54,7 @@ const SidebarLinks = ({ links }: SidebarLinksProps) => {
 const SidebarUser = () => {
     const { setTheme } = useTheme();
 
-    const { token, userName } = useAuth();
+    const { userName } = useAuth();
 
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [isLoginFormOpen, setIsLoginFormOpen] = useState(false);
@@ -79,7 +79,7 @@ const SidebarUser = () => {
             <DropdownMenu open={isDropdownOpen} onOpenChange={handleOpenChange}>
                 <DropdownMenuTrigger asChild>
                     <Button variant="outline" className="size-12">
-                        {token && userName ? (
+                        {userName ? (
                             <User className="size-5" />
                         ) : (
                             <LogIn className="size-5" />
@@ -87,7 +87,7 @@ const SidebarUser = () => {
                     </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start" side="top">
-                    {token && userName && (
+                    {userName && (
                         <>
                             <DropdownMenuLabel>{userName}</DropdownMenuLabel>
                             <DropdownMenuSeparator />
@@ -95,7 +95,7 @@ const SidebarUser = () => {
                     )}
 
                     <DropdownMenuLabel className="flex justify-between gap-2">
-                        {token && userName ? (
+                        {userName ? (
                             <Button
                                 variant="outline"
                                 onClick={handleLogoutClick}

@@ -55,7 +55,7 @@ const initialState: IChatProviderContext = {
 const ChatProviderContext = createContext<IChatProviderContext>(initialState);
 
 export const ChatProvider = ({ children }: PropsWithChildren) => {
-    const { token, userName } = useAuth();
+    const { userName } = useAuth();
     const { chatService } = useGrpc();
 
     const [messages, setMessages] = useState<IMessageResponse[]>([]);
@@ -99,7 +99,7 @@ export const ChatProvider = ({ children }: PropsWithChildren) => {
         cancelStream();
         setActiveChat(chatName);
 
-        if (chatName && token && chatService) {
+        if (chatName && chatService) {
             const controller = new AbortController();
             abortControllerRef.current = controller;
 
@@ -107,7 +107,6 @@ export const ChatProvider = ({ children }: PropsWithChildren) => {
                 const stream = chatService.join(
                     { chatName: chatName },
                     {
-                        meta: { Authorization: `Bearer ${token}` },
                         abort: controller.signal,
                     },
                 );
@@ -204,16 +203,11 @@ export const ChatProvider = ({ children }: PropsWithChildren) => {
                 setIsNewRoom(false);
             }
 
-            await chatService.sendMessage(
-                {
-                    uid: id,
-                    chatName: activeChat,
-                    messageText: message,
-                },
-                {
-                    meta: { Authorization: `Bearer ${token}` },
-                },
-            );
+            await chatService.sendMessage({
+                uid: id,
+                chatName: activeChat,
+                messageText: message,
+            });
         } catch (error) {
             showErrorToast(error as RpcError);
         }
@@ -223,7 +217,7 @@ export const ChatProvider = ({ children }: PropsWithChildren) => {
         return () => {
             cancelStream();
         };
-    }, [token]);
+    }, [userName]);
 
     useEffect(() => {
         localStorage.setItem('chats', JSON.stringify(chats));
