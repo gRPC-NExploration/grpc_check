@@ -22,7 +22,7 @@ COPY src/front/ .
 COPY Protos ./Protos
 
 ENV PROTO_ROOT=./Protos
-RUN bun run generate
+RUN bun run generate:docker
 
 ENV NODE_ENV=production
 RUN bun run build
