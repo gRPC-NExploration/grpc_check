@@ -43,7 +43,10 @@ const FilesHeader = () => {
                         <input
                             type="file"
                             className="invisible absolute h-full w-full cursor-pointer"
-                            onChange={e => uploadFile(e)}
+                            onChange={e => {
+                                uploadFile(e);
+                                e.target.value = '';
+                            }}
                         />
                     </label>
                 </Button>
