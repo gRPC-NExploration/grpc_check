@@ -43,9 +43,9 @@ src/front/
 docker build --build-arg VITE_GRPC_URL=http://your-api-url:8080 -t grpc-chat-files-client .
 ```
 
-* `--build-arg VITE_GRPC_URL=http://your-api-url:8080`: Передает URL вашего API в качестве переменной окружения для
+- `--build-arg VITE_GRPC_URL=http://your-api-url:8080`: Передает URL вашего API в качестве переменной окружения для
   сборки. По умолчанию используется `http://localhost:8080`
-* `-t grpc-chat-files-client`: Задает тег для вашего образа, чтобы вы могли легко ссылаться на него позже.
+- `-t grpc-chat-files-client`: Задает тег для вашего образа, чтобы вы могли легко ссылаться на него позже.
 
 ### Запуск контейнера
 
@@ -53,8 +53,7 @@ docker build --build-arg VITE_GRPC_URL=http://your-api-url:8080 -t grpc-chat-fil
 docker run -p 4173:4173 --name grpc-chat-files-client-container grpc-chat-files-client
 ```
 
-* `-p 4173:4173`: Маппирует порт 4173 контейнера на порт 4173 хоста, чтобы вы могли получить доступ к приложению через
+- `-p 4173:4173`: Маппирует порт 4173 контейнера на порт 4173 хоста, чтобы вы могли получить доступ к приложению через
   браузер.
-* `--name grpc-chat-files-client-container`: Задает имя для вашего контейнера, чтобы вы могли легко управлять им.
-* `grpc-chat-files-client`: Имя образа, который вы создали на предыдущем шаге.
-
+- `--name grpc-chat-files-client-container`: Задает имя для вашего контейнера, чтобы вы могли легко управлять им.
+- `grpc-chat-files-client`: Имя образа, который вы создали на предыдущем шаге.
