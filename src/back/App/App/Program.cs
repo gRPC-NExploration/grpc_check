@@ -45,7 +45,7 @@ builder.Services
                 ValidateAudience = false,
                 ValidateIssuer = false,
                 ValidateActor = false,
-                ValidateLifetime = true,
+                ValidateLifetime = false,
                 IssuerSigningKey = JwtShared.SecurityKey
             };
     });
@@ -67,6 +67,9 @@ app.UseGrpcWeb(new GrpcWebOptions()
 {
     DefaultEnabled = true
 });
+
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapGrpcService<AuthenticationGrpcService>();
 app.MapGrpcService<ChatGrpcService>();

@@ -18,8 +18,9 @@ public class StreamingBackFrontGrpcService(IFileStore filePathStore)
     {
         foreach (var fileName in _filePathStore.FilesByName.Keys)
         {
-            await Task.Delay(request.Interval.ToTimeSpan());
-            
+            if (request.Interval is not null)
+                await Task.Delay(request.Interval.ToTimeSpan());
+
             var result = new GetFileNamesResponse
             {
                 FileName = fileName
@@ -31,19 +32,25 @@ public class StreamingBackFrontGrpcService(IFileStore filePathStore)
 
     public override async Task Download(DownloadRequest request, IServerStreamWriter<DownloadResponse> responseStream, ServerCallContext context)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(request.FileName);
+
         if (!_filePathStore.FilesByName.TryGetValue(request.FileName, out var wrapper))
             throw GetFileNotFoundException(request.FileName, nameof(request.FileName));
 
         var response = new DownloadResponse()
         {
-            Metadata = new FileMetadata { FileName = request.FileName }
+            Metadata = new FileMetadata 
+            { 
+                FileName = wrapper.File.Metadata.FileName,
+                FileSize = wrapper.File.Size,
+            }
         };
 
         await responseStream.WriteAsync(response, context.CancellationToken);
 
         var chunk = 1;
 
-        await foreach (var chunkData in wrapper.File.ReadChunked(context.CancellationToken))
+        await foreach (var chunkData in wrapper.File.ReadChunked(request.ChunkSize, context.CancellationToken))
         {
             response.Chunk = chunk++;
             response.Data = UnsafeByteOperations.UnsafeWrap(chunkData);

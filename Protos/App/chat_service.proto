@@ -7,6 +7,8 @@ option csharp_namespace = "App.Protos";
 import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
 
+import "Common/uuid.proto";
+
 service ChatService {
     // Запрос требующий авторизации.
     // Производит подключение к чату по имени.
@@ -31,15 +33,17 @@ message JoinChatResponse {
 }
 
 message MessageResponse {
-    string chat_name = 1;
-    Message message = 2;
-    string sender_name = 3;
-    google.protobuf.Timestamp message_send_time = 4;
+    common.Uuid uid = 1;
+    string chat_name = 2;
+    Message message = 3;
+    string sender_name = 4;
+    google.protobuf.Timestamp message_send_time = 5;
 }
 
 message SendMessageRequest {
-    string chat_name = 1;
-    Message message_text = 2;
+    common.Uuid uid = 1;
+    string chat_name = 2;
+    Message message_text = 3;
 }
 
 message Message {

@@ -1,13 +1,10 @@
-﻿using System.Runtime.CompilerServices;
-
-using Domain.ValueObjects;
+﻿using Domain.ValueObjects;
+using System.Runtime.CompilerServices;
 
 namespace Domain.Entities;
 
 public class File
 {
-    private const int ChunkSize = 1024 * 32;
-
     private bool _hasContent = false;
     private int? _currentChunk;
     private FileStream? _fileStream;
@@ -15,6 +12,8 @@ public class File
     public FileMetadata Metadata { get; }
 
     public bool Intact => _hasContent && _currentChunk is null;
+
+    public long Size => new System.IO.FileInfo(Metadata.FilePath).Length;
 
     private File(FileMetadata metadata)
     {
@@ -38,7 +37,7 @@ public class File
         {
             _hasContent = true;
             _currentChunk ??= 1;
-            _fileStream ??= new System.IO.FileStream(Metadata.FilePath, FileMode.Create, FileAccess.Write, FileShare.None, ChunkSize, true);
+            _fileStream ??= new System.IO.FileStream(Metadata.FilePath, FileMode.Create, FileAccess.Write, FileShare.None, data.Length, true);
 
             await _fileStream.WriteAsync(data, cancellationToken);
             _currentChunk++;
@@ -58,14 +57,35 @@ public class File
         _hasContent = true;
     }
 
-    public async IAsyncEnumerable<byte[]> ReadChunked([EnumeratorCancellation] CancellationToken cancellationToken)
+    public IAsyncEnumerable<byte[]> ReadChunked(int chunkSize, CancellationToken cancellationToken)
+    {
+        if (chunkSize < 1024)
+        {
+            throw new ArgumentException("Chunk size was too small. Minimal size is 1024 bytes", nameof(chunkSize));
+        }
+
+        return ReadChunkedEnumerator(chunkSize, cancellationToken);
+    }
+
+    public void Delete()
+    {
+        System.IO.File.Delete(Metadata.FilePath);
+        _hasContent = false;
+    }
+
+    public static File Create(FileMetadata metadata)
+    {
+        return new File(metadata);
+    }
+
+    private async IAsyncEnumerable<byte[]> ReadChunkedEnumerator(int chunkSize, [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         if (!Intact)
         {
             throw new InvalidOperationException("File was malformed.");
         }
 
-        var buffer = new byte[ChunkSize];
+        var buffer = new byte[chunkSize];
 
         await using var fileStream = System.IO.File.OpenRead(Metadata.FilePath);
 
@@ -80,16 +100,5 @@ public class File
 
             yield return buffer;
         }
-    }
-
-    public void Delete()
-    {
-        System.IO.File.Delete(Metadata.FilePath);
-        _hasContent = false;
-    }
-
-    public static File Create(FileMetadata metadata)
-    {
-        return new File(metadata);
     }
 }

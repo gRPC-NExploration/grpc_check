@@ -26,14 +26,33 @@ public class UnaryFrontBackGrpcService(IFileStore filePathStore)
         {
             var metadata = Domain.ValueObjects.FileMetadata.Create(request.FileName);
             var file = Domain.Entities.File.Create(metadata);
-            await file.SaveChunk(request.FileBytes.ToByteArray(), request.IsFinal, context.CancellationToken);
+
+            try
+            {
+                await file.SaveChunk(request.FileBytes.ToByteArray(), request.IsFinal, context.CancellationToken);
+            }
+            catch (Exception ex) when (ex is OperationCanceledException or TaskCanceledException)
+            {
+                file.Delete();
+                throw;
+            }
+            
             var newFileWrapper = new FileWrapper() { File = file };
-            _filePathStore.FilesByName.TryAdd(request.FileName, newFileWrapper);
+            _filePathStore.AddFile(request.FileName, newFileWrapper);
         }
         else
         {
             var file = wrapper.File;
-            await file.SaveChunk(request.FileBytes.ToByteArray(), request.IsFinal, context.CancellationToken);
+
+            try
+            {
+                await file.SaveChunk(request.FileBytes.ToByteArray(), request.IsFinal, context.CancellationToken);
+            }
+            catch (Exception ex) when (ex is OperationCanceledException or TaskCanceledException)
+            {
+                file.Delete();
+                throw;
+            }
         }
 
         return new Empty();
@@ -47,12 +66,7 @@ public class UnaryFrontBackGrpcService(IFileStore filePathStore)
             CleanedCount = _filePathStore.FilesByName.Count
         };
 
-        foreach (var file in _filePathStore.FilesByName.Values.Select(x => x.File))
-        {
-            file.Delete();
-        }
-
-        _filePathStore.FilesByName.Clear();
+        _filePathStore.ClearFiles();
 
         return Task.FromResult(result);
     }

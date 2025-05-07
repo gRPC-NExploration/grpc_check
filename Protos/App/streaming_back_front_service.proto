@@ -29,6 +29,7 @@ message GetFileNamesResponse {
 
 message DownloadRequest {
     string file_name = 1;
+    int32 chunk_size = 2;
 }
 
 message DownloadResponse {
@@ -39,4 +40,5 @@ message DownloadResponse {
 
 message FileMetadata {
     string file_name = 1;
+    int64 file_size = 2;
 }

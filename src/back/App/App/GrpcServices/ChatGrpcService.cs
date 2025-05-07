@@ -1,6 +1,6 @@
 ﻿using App.Protos;
 using App.Services.Contracts;
-
+using Common.Protos;
 using Google.Protobuf.WellKnownTypes;
 
 using Grpc.Core;
@@ -18,6 +18,8 @@ public class ChatGrpcService(IChatProvider chatProvider, ICurrentUserService cur
 
     public override async Task Join(Chat request, IServerStreamWriter<JoinChatResponse> responseStream, ServerCallContext context)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(request.ChatName);
+
         var chat = _chatProvider.Provide(request.ChatName, _currentUserService.GetCurrentUserName());
 
         var response = new JoinChatResponse()
@@ -27,7 +29,10 @@ public class ChatGrpcService(IChatProvider chatProvider, ICurrentUserService cur
             CreatedTime = Timestamp.FromDateTime(chat.CreatedDateTime)
         };
 
-        var requestedMessages = chat.Messages.Values.Where(x => x.SendTime > request.MessagesSince.ToDateTime()).SkipLast(1);
+        var requestedMessages = request.MessagesSince is null 
+            ? chat.Messages.Values
+            : chat.Messages.Values.Where(x => x.SendTime > request.MessagesSince.ToDateTime());
+        requestedMessages = requestedMessages.OrderBy(x => x.SendTime).SkipLast(1);
         var messageStream = chat.ReadNewMessages(context.CancellationToken);
 
         foreach (var message in requestedMessages)
@@ -47,11 +52,18 @@ public class ChatGrpcService(IChatProvider chatProvider, ICurrentUserService cur
 
     public override async Task<Empty> SendMessage(SendMessageRequest request, ServerCallContext context)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(request.Uid.Value);
+
+        if (!Guid.TryParse(request.Uid.Value, out var messageId))
+        {
+            throw new InvalidDataException("Uid wasn't representing actual UUID format");
+        }
+
         var chat = _chatProvider.Provide(request.ChatName, _currentUserService.GetCurrentUserName());
 
         Domain.Entities.MessageContent messageContent = Domain.Entities.MessageContent.Create(request.MessageText.MessageText);
 
-        await chat.SendMessage(messageContent, _currentUserService.GetCurrentUserName(), context.CancellationToken);
+        await chat.SendMessage(messageId, messageContent, _currentUserService.GetCurrentUserName(), context.CancellationToken);
 
         return new();
     }
@@ -60,6 +72,7 @@ public class ChatGrpcService(IChatProvider chatProvider, ICurrentUserService cur
     {
         return new()
         {
+            Uid = new Uuid() { Value = message.Id.ToString() },
             ChatName = message.Chat.ChatName,
             Message = new()
             {
