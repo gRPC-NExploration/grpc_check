@@ -11,8 +11,6 @@
 !.yarn/versions
 
 proto/*
-/src/routeTree.gen.ts
-
 
 # testing
 /coverage
