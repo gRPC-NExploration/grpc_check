@@ -20,12 +20,11 @@ class ChatServiceAsyncio(ChatServiceServicer):
         self.connections = set()
         self.lock = asyncio.Lock()
         self.message_queue = asyncio.Queue()
-        self._active = True
         self._broadcast_task = asyncio.create_task(self._broadcast_worker())
 
     async def _broadcast_worker(self):
         """Асинхронная фоновая задача для рассылки сообщений."""
-        while self._active:
+        while True:
             try:
                 message = await self.message_queue.get()
                 if message is None:
@@ -98,10 +97,6 @@ class ChatServiceAsyncio(ChatServiceServicer):
         """Асинхронный обработчик входящих сообщений."""
         try:
             async for message in request_iterator:
-
-                if not self._active:
-                    break
-
                 if message.HasField("init_message"):
                     logger.info("Отправляем клиенту уже существующие в чате сообщения")
                     message = await self._prepare_init_message(message.init_message)
@@ -137,7 +132,7 @@ class ChatServiceAsyncio(ChatServiceServicer):
             )
 
             # Отправляем сообщения клиенту
-            while not context.done() and self._active:
+            while not context.done():
                 try:
                     message = await asyncio.wait_for(connection_queue.get(), timeout=1.0)
                     yield message
