@@ -6,6 +6,7 @@ import datetime
 @dataclass
 class Message:
     message_id: str
+    chat_name: str
     text: str
     sender: str
     send_time: datetime.datetime

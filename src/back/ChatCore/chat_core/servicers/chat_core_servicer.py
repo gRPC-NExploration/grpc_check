@@ -2,12 +2,13 @@ from grpc_generated.ChatCore.chat_service_pb2_grpc import ChatServiceServicer
 from grpc_generated.ChatCore.chat_service_pb2 import ChatServiceEvent, InitMessage
 from grpc_generated.ChatCore.chat_service_pb2 import Message as MessageProto
 from infrastracture.repository import ChatInMemoryRepository
-from google.protobuf.timestamp_pb2 import Timestamp
-from domain.chat import Message
-import datetime
+from servicers.serializers import get_deserialized_message, get_serialized_chat_event
+from servicers.exceptions import ChatIsNotInitialized
+
 import logging
 from uuid import uuid4
 import asyncio
+from collections import defaultdict
 
 
 logging.basicConfig(level=logging.INFO)
@@ -17,7 +18,7 @@ memory_repository = ChatInMemoryRepository()
 
 class ChatServiceAsyncio(ChatServiceServicer):
     def __init__(self):
-        self.connections = set()
+        self.connections = defaultdict(set)
         self.lock = asyncio.Lock()
         self.message_queue = asyncio.Queue()
         self._broadcast_task = asyncio.create_task(self._broadcast_worker())
@@ -30,18 +31,21 @@ class ChatServiceAsyncio(ChatServiceServicer):
                 if message is None:
                     break
 
+                chat_name = message.chat_name
+
                 async with self.lock:
                     dead_connections = []
-                    for connection in self.connections:
+                    for connection in self.connections[chat_name]:
                         try:
+                            #TODO: Возможно, не нужно отправлять сообщение самому отправителю
                             await connection.put(message)
                         except Exception as e:
                             logger.error(f"Ошибка при отправке сообщения: {e}")
                             dead_connections.append(connection)
 
                     # Удаляем нерабочие соединения
-                    for conn in dead_connections:
-                        self.connections.remove(conn)
+                    for connection in dead_connections:
+                        self.connections.remove(connection)
 
             except asyncio.CancelledError:
                 logger.info("Отправка сообщений отменена")
@@ -57,78 +61,62 @@ class ChatServiceAsyncio(ChatServiceServicer):
         #TODO: После появления авторизации брать имя пользователя из токена
         memory_repository.create_chat(chat_name=chat_name, creator=f"{chat_name}_creator")
         messages_from_repository = memory_repository.get_messages_by_chat_name(chat_name=chat_name)
-        messages = []
 
-        if messages_from_repository:
-            for message in messages_from_repository:
-
-                message_timestamp = message.send_time.timestamp()
-                message_send_time = Timestamp(seconds=int(message_timestamp))
-
-                messages.append(
-                    MessageProto(
-                        uid=message.message_id,
-                        chat_name=chat_name,
-                        message_text=message.text,
-                        sender_name=message.sender,
-                        message_send_time=message_send_time
-                    )
-                )
-
-        return ChatServiceEvent(
+        return get_serialized_chat_event(
             chat_name=chat_name,
-            messages=messages
+            messages_from_repository=messages_from_repository
         )
 
     @staticmethod
     async def _handle_message(message: MessageProto) -> None:
-        message_send_time = datetime.datetime.fromtimestamp(timestamp=message.message_send_time.seconds)
-        chat_name = message.chat_name
-        message = Message(
-            message_id=message.uid,
-            text=message.message_text,
-            sender=message.sender_name,
-            send_time=message_send_time
-        )
+        message = get_deserialized_message(message=message)
+        memory_repository.save_message(chat_name=message.chat_name, message=message)
 
-        memory_repository.save_message(chat_name=chat_name, message=message)
-
-    async def _receive_messages(self, request_iterator, connection_queue):
+    async def _receive_messages(self, request_iterator, connection_queue, chat_name: str):
         """Асинхронный обработчик входящих сообщений."""
         try:
             async for message in request_iterator:
-                if message.HasField("init_message"):
-                    logger.info("Отправляем клиенту уже существующие в чате сообщения")
-                    message = await self._prepare_init_message(message.init_message)
+                logger.info("Сохраняем сообщение в репозиторий")
+                await self._handle_message(message=message.message)
+                await self.message_queue.put(
+                    ChatServiceEvent(
+                        chat_name=chat_name,
+                        messages=[message.message]
+                    )
+                )
 
-                else:
-                    logger.info("Сохраняем сообщение в репозиторий")
-                    await self._handle_message(message=message.message)
-
-                await self.message_queue.put(message)
         except asyncio.CancelledError:
             logger.info("Получение сообщений отменено")
         except Exception as e:
             logger.error(f"Ошибка при получении сообщений: {str(e)}")
         finally:
             async with self.lock:
-                if connection_queue in self.connections:
-                    self.connections.remove(connection_queue)
+                if connection_queue in self.connections[chat_name]:
+                    self.connections[chat_name].remove(connection_queue)
 
     async def initialize_chat(self, request_iterator, context):
-        receive_task = None
         """Асинхронный метод для обработки чат-сессии."""
-        connection_id = str(uuid4())
-        connection_queue = asyncio.Queue(maxsize=10)
+        first_message = await request_iterator.__anext__()
+        chat_name = None
+
+        if first_message.HasField("init_message"):
+            logger.info("Отправляем клиенту уже существующие в чате сообщения")
+            chat_name = first_message.init_message.chat_name
+            message = await self._prepare_init_message(first_message.init_message)
+            await self.message_queue.put(message)
+        else:
+            raise ChatIsNotInitialized("Чат не был инициализирован")
+
+        receive_task = None
+        connection_queue = asyncio.Queue()
 
         try:
             async with self.lock:
-                self.connections.add(connection_queue)
-            logger.info(f"Новое подключение: {connection_id}")
+                self.connections[chat_name].add(connection_queue)
 
             # Запускаем задачу для получения сообщений
             receive_task = asyncio.create_task(
-                self._receive_messages(request_iterator, connection_queue)
+                self._receive_messages(request_iterator, connection_queue, chat_name)
             )
 
             # Отправляем сообщения клиенту
@@ -139,10 +127,10 @@ class ChatServiceAsyncio(ChatServiceServicer):
                 except asyncio.TimeoutError:
                     continue
                 except asyncio.CancelledError:
-                    logger.info(f"Соединение {connection_id} отменено")
+                    logger.info(f"Соединение отменено")
                     break
                 except Exception as e:
-                    logger.error(f"Ошибка в соединении {connection_id}: {e}")
+                    logger.error(f"Ошибка в соединении: {e}")
                     break
 
         except Exception as e:
@@ -150,14 +138,14 @@ class ChatServiceAsyncio(ChatServiceServicer):
         finally:
             # Очищаем ресурсы
             async with self.lock:
-                if connection_queue in self.connections:
-                    self.connections.remove(connection_queue)
+                if connection_queue in self.connections[chat_name]:
+                    self.connections[chat_name].remove(connection_queue)
 
-            if 'receive_task' in locals() and not receive_task.done():
+            if not receive_task.done():
                 receive_task.cancel()
                 try:
                     await receive_task
                 except asyncio.CancelledError:
                     pass
 
-            logger.info(f"Соединение закрыто: {connection_id}")
+            logger.info(f"Соединение закрыто")

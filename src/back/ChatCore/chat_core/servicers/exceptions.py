@@ -1,0 +1,2 @@
+class ChatIsNotInitialized(Exception):
+    pass
