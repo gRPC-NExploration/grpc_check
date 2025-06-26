@@ -6,7 +6,6 @@ from servicers.serializers import get_deserialized_message, get_serialized_chat_
 from servicers.exceptions import ChatIsNotInitialized
 
 import logging
-from uuid import uuid4
 import asyncio
 from collections import defaultdict
 
@@ -97,7 +96,6 @@ class ChatServiceAsyncio(ChatServiceServicer):
     async def initialize_chat(self, request_iterator, context):
         """Асинхронный метод для обработки чат-сессии."""
         first_message = await request_iterator.__anext__()
-        chat_name = None
 
         if first_message.HasField("init_message"):
             logger.info("Отправляем клиенту уже существующие в чате сообщения")
