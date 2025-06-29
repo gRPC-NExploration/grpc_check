@@ -4,6 +4,7 @@ from grpc_generated.ChatCore.chat_service_pb2 import Message as MessageProto
 from infrastracture.repository import ChatInMemoryRepository
 from servicers.serializers import get_deserialized_message, get_serialized_chat_event
 from servicers.exceptions import ChatIsNotInitialized
+from auth import get_user_from_context, User
 
 import logging
 import asyncio
@@ -36,7 +37,6 @@ class ChatServiceAsyncio(ChatServiceServicer):
                     dead_connections = []
                     for connection in self.connections[chat_name]:
                         try:
-                            #TODO: Возможно, не нужно отправлять сообщение самому отправителю
                             await connection.put(message)
                         except Exception as e:
                             logger.error(f"Ошибка при отправке сообщения: {e}")
@@ -54,11 +54,10 @@ class ChatServiceAsyncio(ChatServiceServicer):
                 await asyncio.sleep(1)
 
     @staticmethod
-    async def _prepare_init_message(chat_info: InitMessage) -> ChatServiceEvent:
+    async def _prepare_init_message(chat_info: InitMessage, username: str) -> ChatServiceEvent:
         """Подготовка ответа с уже существующими в чате сообщениями."""
         chat_name = chat_info.chat_name
-        #TODO: После появления авторизации брать имя пользователя из токена
-        memory_repository.create_chat(chat_name=chat_name, creator=f"{chat_name}_creator")
+        memory_repository.create_chat(chat_name=chat_name, creator=username)
         messages_from_repository = memory_repository.get_messages_by_chat_name(chat_name=chat_name)
 
         return get_serialized_chat_event(
@@ -95,12 +94,16 @@ class ChatServiceAsyncio(ChatServiceServicer):
 
     async def initialize_chat(self, request_iterator, context):
         """Асинхронный метод для обработки чат-сессии."""
+        user = get_user_from_context(context=context)
         first_message = await request_iterator.__anext__()
 
         if first_message.HasField("init_message"):
             logger.info("Отправляем клиенту уже существующие в чате сообщения")
             chat_name = first_message.init_message.chat_name
-            message = await self._prepare_init_message(first_message.init_message)
+            message = await self._prepare_init_message(
+                chat_info=first_message.init_message,
+                username=user.name
+            )
             await self.message_queue.put(message)
         else:
             raise ChatIsNotInitialized("Чат не был инициализирован")
@@ -134,7 +137,6 @@ class ChatServiceAsyncio(ChatServiceServicer):
         except Exception as e:
             logger.error(f"Ошибка инициализации чата: {e}")
         finally:
-            # Очищаем ресурсы
             async with self.lock:
                 if connection_queue in self.connections[chat_name]:
                     self.connections[chat_name].remove(connection_queue)

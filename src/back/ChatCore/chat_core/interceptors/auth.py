@@ -1,7 +1,8 @@
 import grpc
 from typing import Callable, Awaitable
 import jwt
-from interceptors.config import config
+from auth import get_jwt_payload_from_token
+from utils import get_rpc_metadata
 
 
 class JWTCheckInterceptor(grpc.aio.ServerInterceptor):
@@ -20,11 +21,14 @@ class JWTCheckInterceptor(grpc.aio.ServerInterceptor):
             ],
             handler_call_details: grpc.HandlerCallDetails,
     ) -> grpc.RpcMethodHandler:
-        jwt_token = dict(handler_call_details.invocation_metadata)["token"]
-        payload = jwt.decode(jwt_token, config.JWT_SECRET_KEY, algorithms=[config.ALGORITHM])
-        username: str = payload.get("name", None)
+        jwt_token = dict(handler_call_details.invocation_metadata).get("token", None)
 
-        if not username:
+        if jwt_token is None:
+            return self._abort_handler
+
+        try:
+            get_jwt_payload_from_token(token=jwt_token)
+        except jwt.InvalidTokenError as e:
             return self._abort_handler
 
         return await continuation(handler_call_details)
