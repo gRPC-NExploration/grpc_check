@@ -1,12 +1,13 @@
 syntax = "proto3";
 
-package Core;
+package messages;
 
 import "google/protobuf/timestamp.proto";
-import "Common/uuid.proto";
 
-service ChatService {
-    rpc initialize_chat (stream ChatServiceRequest) returns (stream ChatServiceEvent);
+// Универсальный уникальный идентификатор
+message Uuid {
+    // Значение идентификатора
+    string value = 1;
 }
 
 message ChatServiceRequest {
@@ -24,12 +25,12 @@ message MessageContent {
   string text = 1;
 }
 message MessageRequest {
-  common.Uuid uid = 1;
+  Uuid uid = 1;
   MessageContent content = 2;
 }
 
 message MessageResponse {
-  common.Uuid uid = 1;
+  Uuid uid = 1;
   MessageContent content = 2;
   string sender_name = 3;
   google.protobuf.Timestamp message_send_time = 4;

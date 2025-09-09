@@ -1,6 +1,5 @@
-from grpc_generated.ChatCore.chat_service_pb2_grpc import ChatServiceServicer
-from grpc_generated.ChatCore.chat_service_pb2 import ChatServiceEvent, InitMessage
-from grpc_generated.ChatCore.chat_service_pb2 import Message as MessageProto
+from grpc_generated.chat_service_pb2_grpc import ChatServiceServicer
+from grpc_generated.chat_service_pb2 import messages_dot_messages__pb2
 from infrastracture.repository import ChatInMemoryRepository
 from servicers.serializers import get_deserialized_message, get_serialized_chat_event
 from servicers.exceptions import ChatIsNotInitialized
@@ -54,7 +53,7 @@ class ChatServiceAsyncio(ChatServiceServicer):
                 await asyncio.sleep(1)
 
     @staticmethod
-    async def _prepare_init_message(chat_info: InitMessage, username: str) -> ChatServiceEvent:
+    async def _prepare_init_message(chat_info: messages_dot_messages__pb2.ChatInit, username: str) -> messages_dot_messages__pb2.ChatServiceEvent:
         """Подготовка ответа с уже существующими в чате сообщениями."""
         chat_name = chat_info.chat_name
         memory_repository.create_chat(chat_name=chat_name, creator=username)
@@ -66,7 +65,7 @@ class ChatServiceAsyncio(ChatServiceServicer):
         )
 
     @staticmethod
-    async def _handle_message(message: MessageProto) -> None:
+    async def _handle_message(message: messages_dot_messages__pb2.MessageResponse) -> None:
         message = get_deserialized_message(message=message)
         memory_repository.save_message(chat_name=message.chat_name, message=message)
 
@@ -77,7 +76,7 @@ class ChatServiceAsyncio(ChatServiceServicer):
                 logger.info("Сохраняем сообщение в репозиторий")
                 await self._handle_message(message=message.message)
                 await self.message_queue.put(
-                    ChatServiceEvent(
+                    messages_dot_messages__pb2.ChatServiceEvent(
                         chat_name=chat_name,
                         messages=[message.message]
                     )

@@ -1,11 +1,10 @@
 from domain.chat import Message
-from grpc_generated.ChatCore.chat_service_pb2 import Message as MessageProto
-from grpc_generated.ChatCore.chat_service_pb2 import ChatServiceEvent
+from grpc_generated.chat_service_pb2 import messages_dot_messages__pb2
 from google.protobuf.timestamp_pb2 import Timestamp
 import datetime
 
 
-def get_deserialized_message(message: MessageProto) -> Message:
+def get_deserialized_message(message: messages_dot_messages__pb2.MessageResponse) -> Message:
     message_send_time = datetime.datetime.fromtimestamp(timestamp=message.message_send_time.seconds)
 
     message = Message(
@@ -19,7 +18,7 @@ def get_deserialized_message(message: MessageProto) -> Message:
     return message
 
 
-def get_serialized_chat_event(chat_name: str, messages_from_repository: list[Message]) -> ChatServiceEvent:
+def get_serialized_chat_event(chat_name: str, messages_from_repository: list[Message]) -> messages_dot_messages__pb2.ChatServiceEvent:
     """Подготовка ответа с уже существующими в чате сообщениями."""
     messages = []
 
@@ -30,7 +29,7 @@ def get_serialized_chat_event(chat_name: str, messages_from_repository: list[Mes
             message_send_time = Timestamp(seconds=int(message_timestamp))
 
             messages.append(
-                MessageProto(
+                messages_dot_messages__pb2.MessageResponse(
                     uid=message.message_id,
                     chat_name=chat_name,
                     message_text=message.text,
@@ -39,7 +38,7 @@ def get_serialized_chat_event(chat_name: str, messages_from_repository: list[Mes
                 )
             )
 
-    return ChatServiceEvent(
+    return messages_dot_messages__pb2.ChatServiceEvent(
         chat_name=chat_name,
         messages=messages
     )
