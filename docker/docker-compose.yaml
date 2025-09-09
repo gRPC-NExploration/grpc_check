@@ -9,6 +9,17 @@ services:
       - "8081:8081"
     profiles: [cli, react, backend] # запустится в любом из этих профилей
 
+  py:
+    build:
+      context: ../
+      dockerfile: docker/PythonChatCore.Dockerfile
+    image: grpc-check-py
+    ports:
+      - "8080:8080"
+      - "8081:8081"
+    profiles: [cli, react, backend] # запустится в любом из этих профилей
+
+
   cli:
     build:
       context: ../

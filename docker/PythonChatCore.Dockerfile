@@ -1,19 +1,40 @@
-FROM python:3.11-alpine
+# Используем официальный образ Python
+FROM python:3.11-slim
+
+# Устанавливаем зависимости системы
+RUN apt-get update && apt-get install -y \
+    gcc \
+    && rm -rf /var/lib/apt/lists/*
+
+# Устанавливаем Poetry (если используете его для управления зависимостями)
+RUN pip install poetry
+
+# Устанавливаем переменные окружения
+ENV POETRY_NO_INTERACTION=1 \
+    POETRY_VENV_IN_PROJECT=1 \
+    POETRY_CACHE_DIR=/tmp/poetry_cache
+
+# Создаем рабочую директорию
 WORKDIR /app
 
-COPY ../requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Копируем файлы описания зависимостей
+COPY ../src/back/ChatCore/pyproject.toml ../src/back/ChatCore/poetry.lock ./
 
-COPY ./src/back/ChatCore .
-COPY ./Protos/Core ./Protos/Core
+# Устанавливаем зависимости (включая dev-зависимости, если нужно)
+RUN poetry install --no-root
 
-RUN python -m grpc_tools.protoc -I./Protos/Core/ \
-    --python_out=./chat_core/grpc_generated \
-    --grpc_python_out=./chat_core/grpc_generated \
-    --pyi_out=./chat_core/grpc_generated \
-    ./Protos/Core/chat_service.proto \
-    ./Protos/Core/messages/messages.proto
+# Копируем proto-файлы и исходный код
+COPY ../Protos/ ./proto/
+COPY ../src/back/ChatCore ./
+RUN pip install grpcio_tools
+# Генерируем gRPC-коды (пример команды, адаптируйте под свой случай)
+RUN python -m grpc_tools.protoc -I./proto \
+    --python_out=./src/gen \
+    --grpc_python_out=./src/gen \
+    ./proto/*.proto
 
-EXPOSE 50051
+# Устанавливаем сам проект
+RUN poetry install
 
-RUN python ./chat_core/main.py
+# Команда запуска приложения
+CMD ["poetry", "run", "python", "-m", "chat_core.main"]

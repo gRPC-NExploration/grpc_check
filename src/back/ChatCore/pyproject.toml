@@ -1,9 +1,12 @@
 [tool.poetry]
-name = "chatcore"
+name = "chat_core"
 version = "0.1.0"
 description = ""
 authors = ["Your Name <you@example.com>"]
 readme = "README.md"
+packages = [
+    {include="chat_core"},
+]
 
 [tool.poetry.dependencies]
 python = "^3.9"

@@ -2,8 +2,8 @@ import jwt
 import grpc
 from typing import NamedTuple, Any
 
-from config import config
-from utils import get_rpc_metadata
+from chat_core.config import config
+from chat_core.utils import get_rpc_metadata
 
 
 class User(NamedTuple):
