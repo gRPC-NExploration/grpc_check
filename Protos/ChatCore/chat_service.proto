@@ -12,7 +12,7 @@ service ChatService {
 message ChatServiceRequest {
     oneof chat_service_request {
         ChatInit init_message = 1;
-        Message message = 2;
+        MessageRequest message = 2;
     }
 }
 
@@ -20,15 +20,22 @@ message ChatInit {
     string chat_name = 1;
 }
 
-message Message {
-    common.Uuid uid = 1;
-    string chat_name = 2;
-    string message_text = 3;
-    string sender_name = 4;
-    google.protobuf.Timestamp message_send_time = 5;
+message MessageContent {
+  string text = 1;
+}
+message MessageRequest {
+  common.Uuid uid = 1;
+  MessageContent content = 2;
+}
+
+message MessageResponse {
+  common.Uuid uid = 1;
+  MessageContent content = 2;
+  string sender_name = 3;
+  google.protobuf.Timestamp message_send_time = 4;
 }
 
 message ChatServiceEvent {
     string chat_name = 1;
-    repeated Message messages = 2;
+    repeated MessageResponse messages = 2;
 }
