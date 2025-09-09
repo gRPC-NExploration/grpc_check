@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from domain.chat import Message, Chat
+from chat_core.domain.chat import Message, Chat
 
 
 class AbstractChatRepository(ABC):

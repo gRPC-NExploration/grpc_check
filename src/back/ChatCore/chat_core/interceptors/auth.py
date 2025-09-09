@@ -1,8 +1,8 @@
 import grpc
 from typing import Callable, Awaitable
 import jwt
-from auth import get_jwt_payload_from_token
-from utils import get_rpc_metadata
+from chat_core.auth import get_jwt_payload_from_token
+from chat_core.utils import get_rpc_metadata
 
 
 class JWTCheckInterceptor(grpc.aio.ServerInterceptor):

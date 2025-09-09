@@ -1,8 +1,8 @@
 import logging
 from collections import defaultdict
-from domain.chat import Chat, Message
-from domain.repository import AbstractChatRepository
-from infrastracture.exceptions import ChatNotFound, ChatAlreadyExists
+from chat_core.domain.chat import Chat, Message
+from chat_core.domain.repository import AbstractChatRepository
+from chat_core.infrastracture.exceptions import ChatNotFound, ChatAlreadyExists
 
 
 class ChatInMemoryRepository(AbstractChatRepository):
