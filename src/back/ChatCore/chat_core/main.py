@@ -2,10 +2,10 @@ from concurrent import futures
 import grpc
 import asyncio
 import logging
-from servicers.chat_core_servicer import ChatServiceAsyncio
-from grpc_generated.chat_service_pb2_grpc import add_ChatServiceServicer_to_server
-from interceptors.logger import LoggingInterceptor
-from interceptors.auth import JWTCheckInterceptor
+from chat_core.servicers.chat_core_servicer import ChatServiceAsyncio
+from chat_core.grpc_generated.chat_service_pb2_grpc import add_ChatServiceServicer_to_server
+# from interceptors.logger import LoggingInterceptor
+from chat_core.interceptors.auth import JWTCheckInterceptor
 
 
 MAX_MESSAGE_LENGTH = 40000000

@@ -1,9 +1,9 @@
-from grpc_generated.chat_service_pb2_grpc import ChatServiceServicer
-from grpc_generated.chat_service_pb2 import messages_dot_messages__pb2
-from infrastracture.repository import ChatInMemoryRepository
-from servicers.serializers import get_deserialized_message, get_serialized_chat_event
-from servicers.exceptions import ChatIsNotInitialized
-from auth import get_user_from_context, User
+from chat_core.grpc_generated.chat_service_pb2_grpc import ChatServiceServicer
+from chat_core.grpc_generated.chat_service_pb2 import messages_dot_messages__pb2
+from chat_core.infrastracture.repository import ChatInMemoryRepository
+from chat_core.servicers.serializers import get_deserialized_message, get_serialized_chat_event
+from chat_core.servicers.exceptions import ChatIsNotInitialized
+from chat_core.auth import get_user_from_context, User
 
 import logging
 import asyncio

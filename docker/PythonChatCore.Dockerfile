@@ -8,7 +8,7 @@ RUN apt-get update && apt-get install -y \
 
 # Устанавливаем Poetry (если используете его для управления зависимостями)
 RUN pip install poetry
-
+RUN pip install grpcio_tools
 # Устанавливаем переменные окружения
 ENV POETRY_NO_INTERACTION=1 \
     POETRY_VENV_IN_PROJECT=1 \
@@ -26,11 +26,11 @@ RUN poetry install --no-root
 # Копируем proto-файлы и исходный код
 COPY ../Protos/ ./proto/
 COPY ../src/back/ChatCore ./
-RUN pip install grpcio_tools
+
 # Генерируем gRPC-коды (пример команды, адаптируйте под свой случай)
 RUN python -m grpc_tools.protoc -I./proto \
-    --python_out=./src/gen \
-    --grpc_python_out=./src/gen \
+    --python_out=./chat_core/grpc_generated \
+    --grpc_python_out=./chat_core/grpc_generated \
     ./proto/*.proto
 
 # Устанавливаем сам проект
