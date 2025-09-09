@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+package chat_core;
+
+import "messages/messages.proto";
+
+service ChatService {
+    rpc initialize_chat (stream messages.ChatServiceRequest) returns (stream messages.ChatServiceEvent);
+}

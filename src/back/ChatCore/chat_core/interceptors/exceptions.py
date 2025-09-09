@@ -1,0 +1,2 @@
+class ValidatingTokenFailed(Exception):
+    pass

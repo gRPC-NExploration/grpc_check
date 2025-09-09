@@ -1,0 +1,42 @@
+syntax = "proto3";
+
+package messages;
+
+import "google/protobuf/timestamp.proto";
+
+// Универсальный уникальный идентификатор
+message Uuid {
+    // Значение идентификатора
+    string value = 1;
+}
+
+message ChatServiceRequest {
+    oneof chat_service_request {
+        ChatInit init_message = 1;
+        MessageRequest message = 2;
+    }
+}
+
+message ChatInit {
+    string chat_name = 1;
+}
+
+message MessageContent {
+  string text = 1;
+}
+message MessageRequest {
+  Uuid uid = 1;
+  MessageContent content = 2;
+}
+
+message MessageResponse {
+  Uuid uid = 1;
+  MessageContent content = 2;
+  string sender_name = 3;
+  google.protobuf.Timestamp message_send_time = 4;
+}
+
+message ChatServiceEvent {
+    string chat_name = 1;
+    repeated MessageResponse messages = 2;
+}
